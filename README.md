@@ -1,8 +1,4 @@
-<h1 align="center">⚽ The 12th Man - Premier League Analytics Dashboard
-(Frontend)
-
-</h1> 
-<h2 align="center">(Frontend)</h2>
+<h1 align="center">⚽ The 12th Man - Premier League Analytics Dashboard (Frontend)</h1> 
 Modern React application delivering data-driven Fantasy Football insights through intuitive user interfaces
 
 ## 📖 Overview
