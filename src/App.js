@@ -18,7 +18,7 @@ function SearchPlayers() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');
+            const response = await axios.get('http://localhost:1212/api/v1/player');
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -155,7 +155,7 @@ function Welcome() {
 
     const fetchPlayers = async () => {
         try {
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');
+            const response = await axios.get('http://localhost:1212/api/v1/player');
             const playerData = response.data;
             setPlayers(playerData);
 
@@ -356,7 +356,7 @@ function Teams() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');
+            const response = await axios.get('http://localhost:1212/api/v1/player');
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -529,7 +529,7 @@ function Positions() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');
+            const response = await axios.get('http://localhost:1212/api/v1/player');
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -700,7 +700,8 @@ function Nations() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');            setPlayers(response.data);
+            const response = await axios.get('http://localhost:1212/api/v1/player');            
+            setPlayers(response.data);
             console.log('Nations data loaded:', response.data.length, 'players');
             setError(null);
         } catch (err) {
@@ -857,7 +858,7 @@ function Prediction() {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');
+            const response = await axios.get('http://localhost:1212/api/v1/predictions');
             setPredictions(response.data);
         } catch (err) {
             setError('Failed to load predictions. Please try again.');
