@@ -700,8 +700,8 @@ function Nations() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');
-            setPlayers(response.data);
+            const response = await axios.get('https://premier-league-api-6lv7.onrender.com/api/v1/player');            setPlayers(response.data);
+            console.log('Nations data loaded:', response.data.length, 'players');
             setError(null);
         } catch (err) {
             setError('Failed to fetch players.');
