@@ -300,7 +300,8 @@ function Welcome() {
 
     const fetchPlayers = async () => {
         try {
-            const response = await axios.get('http://localhost:1212/api/v1/player');
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
+
             const playerData = response.data;
             setPlayers(playerData);
 
@@ -441,7 +442,8 @@ function Teams() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:1212/api/v1/player');
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
+
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -562,7 +564,8 @@ function Positions() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:1212/api/v1/player');
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
+
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -670,8 +673,8 @@ function Nations() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:1212/api/v1/player');            
-            setPlayers(response.data);
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
+
             console.log('Nations data loaded:', response.data.length, 'players');
             setError(null);
         } catch (err) {
@@ -776,7 +779,8 @@ function Prediction() {
             setLoading(true);
             setError(null);
 
-            const response = await axios.get("http://localhost:1212/api/v1/predictions");
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/predictions`);
+
 
             setPredictions(response.data);
             console.log("Prediction team names:", response.data.map(p => p.teamName));
