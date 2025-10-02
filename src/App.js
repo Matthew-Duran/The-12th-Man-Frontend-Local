@@ -2,7 +2,84 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import './App.css';
+
+// Logo mappings
+const TEAM_LOGOS = {
+    "Liverpool": "https://resources.premierleague.com/premierleague/badges/50/t14.png",
+    "Arsenal": "https://resources.premierleague.com/premierleague/badges/50/t3.png",
+    "Aston-Villa": "https://resources.premierleague.com/premierleague/badges/50/t7.png",
+    "Aston Villa": "https://resources.premierleague.com/premierleague/badges/50/t7.png",
+    "Bournemouth": "https://resources.premierleague.com/premierleague/badges/50/t91.png",
+    "Brentford": "https://resources.premierleague.com/premierleague/badges/50/t94.png",
+    "Brighton-and-Hove-Albion": "https://resources.premierleague.com/premierleague/badges/50/t36.png",
+    "Brighton": "https://resources.premierleague.com/premierleague/badges/50/t36.png",
+    "Burnley": "https://resources.premierleague.com/premierleague/badges/50/t90.png",
+    "Chelsea": "https://resources.premierleague.com/premierleague/badges/50/t8.png",
+    "Crystal-Palace": "https://resources.premierleague.com/premierleague/badges/50/t31.png",
+    "Crystal Palace": "https://resources.premierleague.com/premierleague/badges/50/t31.png",
+    "Everton": "https://resources.premierleague.com/premierleague/badges/50/t11.png",
+    "Fulham": "https://resources.premierleague.com/premierleague/badges/50/t54.png",
+    "Ipswich-Town": "https://resources.premierleague.com/premierleague/badges/50/t40.png",
+    "Leeds-United": "https://resources.premierleague.com/premierleague/badges/50/t2.png",
+    "Leeds": "https://resources.premierleague.com/premierleague/badges/50/t2.png",
+    "Leicester-City": "https://resources.premierleague.com/premierleague/badges/50/t13.png",
+    "Manchester-City": "https://resources.premierleague.com/premierleague/badges/50/t43.png",
+    "Man City": "https://resources.premierleague.com/premierleague/badges/50/t43.png",
+    "Manchester-United": "https://resources.premierleague.com/premierleague/badges/50/t1.png",
+    "Man United": "https://resources.premierleague.com/premierleague/badges/50/t1.png",
+    "Newcastle-United": "https://resources.premierleague.com/premierleague/badges/50/t4.png",
+    "Newcastle": "https://resources.premierleague.com/premierleague/badges/50/t4.png",
+    "Nottingham-Forest": "https://resources.premierleague.com/premierleague/badges/50/t17.png",
+    "Nott'm Forest": "https://resources.premierleague.com/premierleague/badges/50/t17.png",
+    "Southampton": "https://resources.premierleague.com/premierleague/badges/50/t20.png",
+    "Sunderland": "https://resources.premierleague.com/premierleague/badges/50/t56.png",
+    "Tottenham-Hotspur": "https://resources.premierleague.com/premierleague/badges/50/t6.png",
+    "Tottenham": "https://resources.premierleague.com/premierleague/badges/50/t6.png",
+    "West-Ham-United": "https://resources.premierleague.com/premierleague/badges/50/t21.png",
+    "West Ham": "https://resources.premierleague.com/premierleague/badges/50/t21.png",
+    "Wolverhampton-Wanderers": "https://resources.premierleague.com/premierleague/badges/50/t39.png",
+    "Wolves": "https://resources.premierleague.com/premierleague/badges/50/t39.png"
+};
+
+const NATION_FLAGS = {
+    "ENG": "gb-eng", "SCO": "gb-sct", "WAL": "gb-wls", "NIR": "gb-nir",
+    "FRA": "fr", "NED": "nl", "BRA": "br", "ESP": "es", "POR": "pt",
+    "GER": "de", "ARG": "ar", "ITA": "it", "DEN": "dk", "BEL": "be",
+    "SWE": "se", "NOR": "no", "CIV": "ci", "IRL": "ie", "NGA": "ng",
+    "SEN": "sn", "USA": "us", "MAR": "ma", "SUI": "ch", "JPN": "jp",
+    "SRB": "rs", "COL": "co", "CMR": "cm", "POL": "pl", "CRO": "hr",
+    "URU": "uy", "CZE": "cz", "MEX": "mx", "COD": "cd", "PAR": "py",
+    "HUN": "hu", "EGY": "eg", "ECU": "ec", "GHA": "gh", "AUT": "at",
+    "UKR": "ua", "BFA": "bf", "KOR": "kr", "TUR": "tr", "GRE": "gr",
+    "SVN": "si", "GEO": "ge", "ISR": "il", "GNB": "gw", "MOZ": "mz",
+    "ALG": "dz", "UZB": "uz", "TRI": "tt", "JAM": "jm", "ISL": "is",
+    "GAM": "gm", "NZL": "nz", "BUL": "bg", "SVK": "sk", "RSA": "za",
+    "TUN": "tn", "PER": "pe", "ALB": "al", "ZIM": "zw", "HAI": "ht"
+};
+
+const getPositionIcon = (position) => {
+    const icons = {
+        "GK": "🧤",
+        "DF": "🛡️",
+        "MF": "⚙️",
+        "FW": "⚡",
+        "FW,MF": "🎯",
+        "MF,FW": "🧭",
+        "DF,MF": "🏗️",
+        "MF,DF": "🔗",
+        "DF,FW": "⚔️",
+        "FW,DF": "🦅"
+
+    };
+
+    return icons[position] || "👤";
+};
+
+const getTeamLogo = (teamName) => TEAM_LOGOS[teamName] || "";
+const getNationFlag = (nation) => {
+    const countryCode = NATION_FLAGS[nation];
+    return countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : "";
+};
 
 // Search Players -----------------------------------------------------------------------------------
 function SearchPlayers() {
@@ -33,110 +110,65 @@ function SearchPlayers() {
         player.name && player.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const inputStyle = {
-        padding: '1rem',
-        borderRadius: '25px',
-        border: '1px solid #333',
-        background: 'rgba(255,255,255,0.1)',
-        color: 'white',
-        fontSize: '1rem',
-        width: '300px'
-    };
-
-    const cardStyle = {
-        background: 'rgba(255,255,255,0.1)',
-        margin: '1rem auto',
-        padding: '1rem',
-        borderRadius: '10px',
-        maxWidth: '600px',
-        border: '1px solid rgba(255,255,255,0.2)'
-    };
-
     return (
-        <div>
-            <h2>Search Players</h2>
-
-            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <div className="page-content">
+            <div className="search-section">
                 <input
                     type="text"
-                    placeholder="Search players by name..."
+                    placeholder="Search players..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={inputStyle}
+                    className="search-input-box"
                 />
             </div>
 
-            {loading && <p>Loading players...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {loading && <div className="loading-message">Loading players...</div>}
+            {error && <div className="error-message">{error}</div>}
 
             {!loading && !error && (
-                <div>
-                    <p>Found {filteredPlayers.length} players</p>
-                    {filteredPlayers.map((player, index) => (
-                        <div key={`${player.name}-${index}`} style={cardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3 style={{ color: '#00d4ff', margin: 0 }}>{player.name}</h3>
-                                <span style={{
-                                    background: '#00d4ff',
-                                    color: '#000',
-                                    padding: '0.3rem 0.8rem',
-                                    borderRadius: '15px',
-                                    fontSize: '0.9rem',
-                                    fontWeight: 'bold'
-                                }}>
-                  {player.position}
-                </span>
-                            </div>
-
-                            <p style={{ margin: '0.5rem 0', fontSize: '1.1rem' }}>
-                                <strong>{player.team_name}</strong> | {player.nation ? player.nation.split(' ')[1] || player.nation : ''}
-                            </p>
-
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                                gap: '1rem',
-                                margin: '1rem 0',
-                                padding: '1rem',
-                                background: 'rgba(0, 212, 255, 0.1)',
-                                borderRadius: '8px'
-                            }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ color: '#00d4ff', fontWeight: 'bold' }}>Goals</div>
-                                    <div style={{ fontSize: '1.5rem' }}>{player.goals || 0}</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ color: '#00d4ff', fontWeight: 'bold' }}>Assists</div>
-                                    <div style={{ fontSize: '1.5rem' }}>{player.assists || 0}</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ color: '#00d4ff', fontWeight: 'bold' }}>Minutes</div>
-                                    <div style={{ fontSize: '1.2rem' }}>{player.minutes_played || 0}</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ color: '#00d4ff', fontWeight: 'bold' }}>Starts</div>
-                                    <div style={{ fontSize: '1.2rem' }}>{player.starts || 0}/{player.matches_played || 0}</div>
+                <div className="table-container">
+                    <div className="table-header-row">
+                        <div className="table-title">Players</div>
+                        <div className="table-count">{filteredPlayers.length} found</div>
+                    </div>
+                    <div className="data-table">
+                        {filteredPlayers.map((player, index) => (
+                            <div key={`${player.name}-${index}`} className="table-row">
+                                <div className="row-main">
+                                    <div className="player-info-cell">
+                                        <div className="player-avatar">{player.name.substring(0, 2).toUpperCase()}</div>
+                                        <div className="player-text">
+                                            <div className="player-name-text">{player.name}</div>
+                                            <div className="player-meta-text">
+                                                {getTeamLogo(player.team_name) && (
+                                                    <img src={getTeamLogo(player.team_name)} alt={player.team_name} style={{width: '20px', height: '20px', marginRight: '6px', verticalAlign: 'middle'}} />
+                                                )}
+                                                {player.team_name} · {player.position}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="stats-cell">
+                                        <div className="stat-group">
+                                            <span className="stat-num">{player.goals || 0}</span>
+                                            <span className="stat-lbl">G</span>
+                                        </div>
+                                        <div className="stat-group">
+                                            <span className="stat-num">{player.assists || 0}</span>
+                                            <span className="stat-lbl">A</span>
+                                        </div>
+                                        <div className="stat-group">
+                                            <span className="stat-num">{player.minutes_played || 0}</span>
+                                            <span className="stat-lbl">MIN</span>
+                                        </div>
+                                        <div className="stat-group">
+                                            <span className="stat-num">{player.starts || 0}/{player.matches_played || 0}</span>
+                                            <span className="stat-lbl">ST</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#a0a0a0' }}>
-                                <span>xG: {player.expected_goals || 0}</span>
-                                <span>xA: {player.expected_assists || 0}</span>
-                                <span>Cards: {player.yellow_cards || 0}Y / {player.red_cards || 0}R</span>
-                            </div>
-
-                            <div style={{
-                                marginTop: '0.5rem',
-                                padding: '0.5rem',
-                                background: player.minutes_played > 300 ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 165, 0, 0.2)',
-                                borderRadius: '5px',
-                                fontSize: '0.8rem',
-                                textAlign: 'center'
-                            }}>
-                                {player.minutes_played > 300 ? '✓ Regular Starter' : '⚠ Rotation Risk'}
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -159,7 +191,6 @@ function Welcome() {
             const playerData = response.data;
             setPlayers(playerData);
 
-            // Calculate interesting stats
             const topScorer = playerData.reduce((max, player) =>
                 (player.goals || 0) > (max.goals || 0) ? player : max, playerData[0] || {});
 
@@ -193,150 +224,80 @@ function Welcome() {
         }
     };
 
-    const heroStyle = {
-        textAlign: 'center',
-        marginBottom: '3rem',
-        padding: '2rem',
-        background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.05))',
-        borderRadius: '15px',
-        border: '1px solid rgba(0, 212, 255, 0.2)'
-    };
-
-    const statsGridStyle = {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '3rem'
-    };
-
-    const statCardStyle = {
-        background: 'rgba(0, 212, 255, 0.05)',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        border: '1px solid rgba(0, 212, 255, 0.2)',
-        textAlign: 'center',
-        transition: 'transform 0.3s ease',
-        cursor: 'pointer'
-    };
-
-    const highlightCardStyle = {
-        background: 'rgba(0, 212, 255, 0.08)',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        border: '2px solid rgba(0, 212, 255, 0.3)',
-        margin: '1rem 0',
-        textAlign: 'center'
-    };
-
     if (loading) {
-        return (
-            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-                <h2>Loading Premier League Data...</h2>
-                <p>Fetching the latest 2025-26 season statistics</p>
-            </div>
-        );
+        return <div className="loading-message">Loading Premier League Data...</div>;
     }
 
+    const topScorers = [...players].sort((a, b) => (b.goals || 0) - (a.goals || 0)).slice(0, 5);
+    const topAssisters = [...players].sort((a, b) => (b.assists || 0) - (a.assists || 0)).slice(0, 5);
+
     return (
-        <div>
-            <div style={heroStyle}>
-                <h2 style={{ fontSize: '4rem', marginBottom: '1rem', color: '#00d4ff' }}>
-                    The 12th Man
-                </h2>
-                <p style={{ fontSize: '1.3rem', color: '#666', marginBottom: '0.5rem' }}>
-                    Your Premier League Statistics Hub
-                </p>
-                <p style={{ fontSize: '1.1rem', color: '#888' }}>
-                    2025-26 Season | Live FPL Insights
-                </p>
-            </div>
-
-            <div style={statsGridStyle}>
-                <div style={statCardStyle}>
-                    <h3 style={{ color: '#00d4ff', fontSize: '2rem', margin: 0 }}>
-                        {stats.totalPlayers || 0}
-                    </h3>
-                    <p style={{ margin: '0.5rem 0', color: '#666' }}>Players Tracked</p>
+        <div className="page-content">
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <div className="stat-card-value">{stats.totalPlayers || 0}</div>
+                    <div className="stat-card-label">Players Tracked</div>
                 </div>
-
-                <div style={statCardStyle}>
-                    <h3 style={{ color: '#00d4ff', fontSize: '2rem', margin: 0 }}>
-                        {stats.teamCount || 0}
-                    </h3>
-                    <p style={{ margin: '0.5rem 0', color: '#666' }}>Premier League Teams</p>
+                <div className="stat-card">
+                    <div className="stat-card-value">{stats.teamCount || 0}</div>
+                    <div className="stat-card-label">Teams</div>
                 </div>
-
-                <div style={statCardStyle}>
-                    <h3 style={{ color: '#00d4ff', fontSize: '2rem', margin: 0, }}>
-                        {stats.nationCount || 0}
-                    </h3>
-                    <p style={{ margin: '0.5rem 0', color: '#666' }}>Nations Represented</p>
+                <div className="stat-card">
+                    <div className="stat-card-value">{stats.nationCount || 0}</div>
+                    <div className="stat-card-label">Nations</div>
                 </div>
-
-                <div style={statCardStyle}>
-                    <h3 style={{ color: '#00d4ff', fontSize: '2rem', margin: 0 }}>
-                        {stats.totalGoals || 0}
-                    </h3>
-                    <p style={{ margin: '0.5rem 0', color: '#666' }}>Total Goals Scored</p>
+                <div className="stat-card">
+                    <div className="stat-card-value">{stats.totalGoals || 0}</div>
+                    <div className="stat-card-label">Total Goals</div>
                 </div>
             </div>
 
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <h3 style={{ textAlign: 'center', color: '#00d4ff', marginBottom: '1.5rem' }}>
-                    Season Highlights
-                </h3>
-
-                {stats.topScorer && (
-                    <div style={highlightCardStyle}>
-                        <h4 style={{ color: '#00d4ff', margin: 0 }}>⚽ Top Goalscorer</h4>
-                        <p style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>
-                            <strong>{stats.topScorer.name}</strong> ({stats.topScorer.team_name})
-                        </p>
-                        <p style={{ color: '#666', margin: 0 }}>
-                            {stats.topScorer.goals} goals in {stats.topScorer.matches_played} matches
-                        </p>
+            <div className="content-row">
+                <div className="content-card">
+                    <div className="card-header">
+                        <h3 className="card-title">Top Scorers</h3>
                     </div>
-                )}
-
-                {stats.topAssister && (
-                    <div style={highlightCardStyle}>
-                        <h4 style={{ color: '#00d4ff', margin: 0 }}>🎯 Top Assister</h4>
-                        <p style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>
-                            <strong>{stats.topAssister.name}</strong> ({stats.topAssister.team_name})
-                        </p>
-                        <p style={{ color: '#666', margin: 0 }}>
-                            {stats.topAssister.assists} assists this season
-                        </p>
+                    <div className="leader-list">
+                        {topScorers.map((player, idx) => (
+                            <div key={idx} className="leader-item">
+                                <div className="leader-rank">{idx + 1}</div>
+                                <div className="leader-info">
+                                    <div className="leader-name">{player.name}</div>
+                                    <div className="leader-team">
+                                        {getTeamLogo(player.team_name) && (
+                                            <img src={getTeamLogo(player.team_name)} alt={player.team_name} style={{width: '18px', height: '18px', marginRight: '4px', verticalAlign: 'middle'}} />
+                                        )}
+                                        {player.team_name}
+                                    </div>
+                                </div>
+                                <div className="leader-stat">{player.goals || 0}</div>
+                            </div>
+                        ))}
                     </div>
-                )}
+                </div>
 
-                {stats.workhorse && (
-                    <div style={highlightCardStyle}>
-                        <h4 style={{ color: '#00d4ff', margin: 0 }}>🔋 Most Minutes Played</h4>
-                        <p style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>
-                            <strong>{stats.workhorse.name}</strong> ({stats.workhorse.team_name})
-                        </p>
-                        <p style={{ color: '#666', margin: 0 }}>
-                            {stats.workhorse.minutes_played} minutes
-                        </p>
+                <div className="content-card">
+                    <div className="card-header">
+                        <h3 className="card-title">Top Assisters</h3>
                     </div>
-                )}
-            </div>
-
-            <div style={{
-                textAlign: 'center',
-                marginTop: '3rem',
-                padding: '2rem',
-                background: 'rgba(0, 212, 255, 0.03)',
-                borderRadius: '12px',
-                border: '1px solid rgba(0, 212, 255, 0.1)'
-            }}>
-                <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '1rem' }}>
-                    Ready to dominate your Fantasy Premier League?
-                </p>
-                <p style={{ color: '#888' }}>
-                    Explore player stats, team analysis, and discover hidden gems using the navigation above.
-                </p>
+                    <div className="leader-list">
+                        {topAssisters.map((player, idx) => (
+                            <div key={idx} className="leader-item">
+                                <div className="leader-rank">{idx + 1}</div>
+                                <div className="leader-info">
+                                    <div className="leader-name">{player.name}</div>
+                                    <div className="leader-team">
+                                        {getTeamLogo(player.team_name) && (
+                                            <img src={getTeamLogo(player.team_name)} alt={player.team_name} style={{width: '18px', height: '18px', marginRight: '4px', verticalAlign: 'middle'}} />
+                                        )}
+                                        {player.team_name}
+                                    </div>
+                                </div>
+                                <div className="leader-stat">{player.assists || 0}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -367,148 +328,93 @@ function Teams() {
         }
     };
 
-    // Group players by team
     const teamStats = players.reduce((acc, player) => {
         const team = player.team_name || 'Unknown';
-
         if (!acc[team]) {
             acc[team] = {
                 players: [],
                 totalGoals: 0,
                 totalAssists: 0,
-                totalMinutes: 0,
-                count: 0,
-                topScorer: null,
-                topAssister: null
+                count: 0
             };
         }
-
         acc[team].players.push(player);
         acc[team].totalGoals += player.goals || 0;
         acc[team].totalAssists += player.assists || 0;
-        acc[team].totalMinutes += player.minutes_played || 0;
         acc[team].count += 1;
-
-        // Track top scorer and assister
-        if (!acc[team].topScorer || (player.goals || 0) > (acc[team].topScorer.goals || 0)) {
-            acc[team].topScorer = player;
-        }
-        if (!acc[team].topAssister || (player.assists || 0) > (acc[team].topAssister.assists || 0)) {
-            acc[team].topAssister = player;
-        }
-
         return acc;
     }, {});
 
-    // Sort teams by goals
-    const sortedTeams = Object.entries(teamStats)
-        .sort(([,a], [,b]) => b.totalGoals - a.totalGoals);
+    const sortedTeams = Object.entries(teamStats).sort(([,a], [,b]) => b.totalGoals - a.totalGoals);
 
-    const cardStyle = {
-        background: 'rgba(0, 212, 255, 0.05)',
-        margin: '1rem auto',
-        padding: '1rem',
-        borderRadius: '10px',
-        maxWidth: '900px',
-        border: '1px solid rgba(0, 212, 255, 0.2)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease'
-    };
-
-    const playerCardStyle = {
-        background: 'rgba(0, 212, 255, 0.03)',
-        margin: '0.5rem 0',
-        padding: '0.8rem',
-        borderRadius: '8px',
-        border: '1px solid rgba(0, 212, 255, 0.1)'
-    };
+    console.log("Team names in database:", sortedTeams.map(([team]) => team));
 
     return (
-        <div>
-            <h2>Premier League Teams</h2>
-            <p>Team statistics and squad analysis for FPL planning</p>
-
-            {loading && <p>Loading teams data...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+        <div className="page-content">
+            {loading && <div className="loading-message">Loading teams data...</div>}
+            {error && <div className="error-message">{error}</div>}
 
             {!loading && !error && (
-                <div>
-                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <p style={{ fontSize: '1.1rem', color: '#666' }}>
-                            {sortedTeams.length} teams analyzed
-                        </p>
+                <div className="table-container">
+                    <div className="table-header-row">
+                        <div className="table-title">Teams</div>
+                        <div className="table-count">{sortedTeams.length} teams</div>
                     </div>
 
-                    {sortedTeams.map(([team, stats]) => (
-                        <div
-                            key={team}
-                            style={{
-                                ...cardStyle,
-                                transform: selectedTeam === team ? 'scale(1.02)' : 'scale(1)',
-                                borderColor: selectedTeam === team ? '#00d4ff' : 'rgba(0, 212, 255, 0.2)'
-                            }}
-                            onClick={() => setSelectedTeam(selectedTeam === team ? '' : team)}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ color: '#00d4ff', margin: 0, fontSize: '1.5rem' }}>
-                                        {team}
-                                    </h3>
-                                    <p style={{ margin: '0.5rem 0', color: '#666' }}>
-                                        {stats.count} players in database
-                                    </p>
+                    <div className="league-table">
+                        <div className="league-table-header">
+                            <div className="col-rank">#</div>
+                            <div className="col-team">Team</div>
+                            <div className="col-stat">PL</div>
+                            <div className="col-stat">G</div>
+                            <div className="col-stat">A</div>
+                        </div>
+                        {sortedTeams.map(([team, stats], idx) => (
+                            <div key={team}>
+                                <div
+                                    className={`league-table-row ${selectedTeam === team ? 'row-expanded' : ''}`}
+                                    onClick={() => setSelectedTeam(selectedTeam === team ? '' : team)}
+                                >
+                                    <div className="col-rank">
+                                        <div className={`rank-badge ${idx < 4 ? 'rank-top' : idx < 6 ? 'rank-europe' : idx >= 17 ? 'rank-danger' : ''}`}>
+                                            {idx + 1}
+                                        </div>
+                                    </div>
+                                    <div className="col-team">
+                                        <div className="team-badge">
+                                            {getTeamLogo(team) ? (
+                                                <img src={getTeamLogo(team)} alt={team} style={{width: '100%', height: '100%', objectFit: 'contain', padding: '4px'}} />
+                                            ) : (
+                                                team.substring(0, 3).toUpperCase()
+                                            )}
+                                        </div>
+                                        <span className="team-name-full">{team}</span>
+                                    </div>
+                                    <div className="col-stat">{stats.count}</div>
+                                    <div className="col-stat stat-highlight">{stats.totalGoals}</div>
+                                    <div className="col-stat stat-highlight">{stats.totalAssists}</div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '2rem', textAlign: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {stats.totalGoals}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Team Goals</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {stats.totalAssists}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Team Assists</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {stats.topScorer?.name?.split(' ').slice(-1)[0] || 'N/A'}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Top Scorer</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {selectedTeam === team && (
-                                <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(0, 212, 255, 0.2)', paddingTop: '1rem' }}>
-                                    <h4 style={{ color: '#00d4ff', marginBottom: '1rem' }}>{team} Squad:</h4>
-                                    {stats.players
-                                        .sort((a, b) => (b.goals || 0) - (a.goals || 0))
-                                        .map((player, index) => (
-                                            <div key={`${player.name}-${index}`} style={playerCardStyle}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div>
-                                                        <strong style={{ color: '#ffffff' }}>{player.name}</strong>
-                                                        <span style={{ marginLeft: '1rem', color: '#666' }}>
-                              {player.position} | {player.nation ? player.nation.split(' ')[1] || player.nation : ''}
-                            </span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem' }}>
-                                                        <span>{player.goals || 0}G</span>
-                                                        <span>{player.assists || 0}A</span>
-                                                        <span>{player.minutes_played || 0}min</span>
-                                                        <span>{player.starts || 0}/{player.matches_played || 0}</span>
-                                                    </div>
+                                {selectedTeam === team && (
+                                    <div className="squad-expansion">
+                                        {stats.players.sort((a, b) => (b.goals || 0) - (a.goals || 0)).map((player, pIdx) => (
+                                            <div key={pIdx} className="squad-player-row">
+                                                <div className="squad-player-name">{player.name}</div>
+                                                <div className="squad-player-pos">{player.position}</div>
+                                                <div className="squad-player-stats">
+                                                    <span>{player.goals || 0}G</span>
+                                                    <span> </span>
+                                                    <span>{player.assists || 0}A</span>
+                                                    <span> </span>
+                                                    <span>{player.minutes_played || 0}min</span>
                                                 </div>
                                             </div>
                                         ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -534,158 +440,95 @@ function Positions() {
             setError(null);
         } catch (err) {
             setError('Failed to fetch players.');
-            console.error('Error fetching players:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    // Group players by position
     const positionStats = players.reduce((acc, player) => {
         const position = player.position || 'Unknown';
-
         if (!acc[position]) {
-            acc[position] = {
-                players: [],
-                totalGoals: 0,
-                totalAssists: 0,
-                totalMinutes: 0,
-                count: 0,
-                avgGoals: 0,
-                avgAssists: 0
-            };
+            acc[position] = { players: [], totalGoals: 0, totalAssists: 0, count: 0 };
         }
-
         acc[position].players.push(player);
         acc[position].totalGoals += player.goals || 0;
         acc[position].totalAssists += player.assists || 0;
-        acc[position].totalMinutes += player.minutes_played || 0;
         acc[position].count += 1;
-
         return acc;
     }, {});
 
-    // Calculate averages and sort positions
     const sortedPositions = Object.entries(positionStats)
         .map(([position, stats]) => ({
             position,
             ...stats,
-            avgGoals: (stats.totalGoals / stats.count).toFixed(2),
-            avgAssists: (stats.totalAssists / stats.count).toFixed(2)
+            avgGoals: (stats.totalGoals / stats.count).toFixed(1),
+            avgAssists: (stats.totalAssists / stats.count).toFixed(1)
         }))
         .sort((a, b) => b.count - a.count);
 
-    const cardStyle = {
-        background: 'rgba(0, 212, 255, 0.05)',
-        margin: '1rem auto',
-        padding: '1rem',
-        borderRadius: '10px',
-        maxWidth: '800px',
-        border: '1px solid rgba(0, 212, 255, 0.2)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease'
-    };
+    console.log("Position names in database:", sortedPositions.map(p => p.position));
 
-    const playerCardStyle = {
-        background: 'rgba(0, 212, 255, 0.03)',
-        margin: '0.5rem 0',
-        padding: '0.8rem',
-        borderRadius: '8px',
-        border: '1px solid rgba(0, 212, 255, 0.1)'
-    };
 
     return (
-        <div>
-            <h2>Player Positions</h2>
-            <p>Premier League players grouped by position</p>
-
-            {loading && <p>Loading positions data...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+        <div className="page-content">
+            {loading && <div className="loading-message">Loading...</div>}
+            {error && <div className="error-message">{error}</div>}
 
             {!loading && !error && (
-                <div>
-                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <p style={{ fontSize: '1.1rem', color: '#666' }}>
-                            {sortedPositions.length} positions with {players.length} total players
-                        </p>
+                <div className="table-container">
+                    <div className="table-header-row">
+                        <div className="table-title">Positions</div>
                     </div>
 
-                    {sortedPositions.map((posData) => (
-                        <div
-                            key={posData.position}
-                            style={{
-                                ...cardStyle,
-                                transform: selectedPosition === posData.position ? 'scale(1.02)' : 'scale(1)',
-                                borderColor: selectedPosition === posData.position ? '#00d4ff' : 'rgba(0, 212, 255, 0.2)'
-                            }}
-                            onClick={() => setSelectedPosition(selectedPosition === posData.position ? '' : posData.position)}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ color: '#00d4ff', margin: 0, fontSize: '1.5rem' }}>
-                                        {posData.position}
-                                    </h3>
-                                    <p style={{ margin: '0.5rem 0', color: '#666' }}>
-                                        {posData.count} players
-                                    </p>
+                    <div className="league-table">
+                        <div className="league-table-header">
+                            <div className="col-team">Position</div>
+                            <div className="col-stat">Players</div>
+                            <div className="col-stat">Avg G</div>
+                            <div className="col-stat">Avg A</div>
+                            <div className="col-stat">Total</div>
+                        </div>
+                        {sortedPositions.map((posData) => (
+                            <div key={posData.position}>
+                                <div
+                                    className={`league-table-row ${selectedPosition === posData.position ? 'row-expanded' : ''}`}
+                                    onClick={() => setSelectedPosition(selectedPosition === posData.position ? '' : posData.position)}
+                                >
+                                    <div className="col-team">
+                                        <div className="team-badge" style={{fontSize: '1.2rem'}}>
+                                            {getPositionIcon(posData.position)}
+                                        </div>
+                                        <span className="team-name-full">{posData.position}</span>
+                                    </div>
+                                    <div className="col-stat">{posData.count}</div>
+                                    <div className="col-stat stat-highlight">{posData.avgGoals}</div>
+                                    <div className="col-stat stat-highlight">{posData.avgAssists}</div>
+                                    <div className="col-stat">{posData.totalGoals}</div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '2rem', textAlign: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {posData.avgGoals}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Avg Goals</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {posData.avgAssists}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Avg Assists</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {posData.totalGoals}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Total Goals</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {selectedPosition === posData.position && (
-                                <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(0, 212, 255, 0.2)', paddingTop: '1rem' }}>
-                                    <h4 style={{ color: '#00d4ff', marginBottom: '1rem' }}>Top {posData.position} players:</h4>
-                                    {posData.players
-                                        .sort((a, b) => (b.goals || 0) - (a.goals || 0))
-                                        .slice(0, 10)
-                                        .map((player, index) => (
-                                            <div key={`${player.name}-${index}`} style={playerCardStyle}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div>
-                                                        <strong style={{ color: '#ffffff' }}>{player.name}</strong>
-                                                        <span style={{ marginLeft: '1rem', color: '#666' }}>
-                              {player.team_name}
-                            </span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem' }}>
-                                                        <span>{player.goals || 0}G</span>
-                                                        <span>{player.assists || 0}A</span>
-                                                        <span>{player.minutes_played || 0}min</span>
-                                                    </div>
+                                {selectedPosition === posData.position && (
+                                    <div className="squad-expansion">
+                                        {posData.players.sort((a, b) => (b.goals || 0) - (a.goals || 0)).slice(0, 10).map((player, idx) => (
+                                            <div key={idx} className="squad-player-row">
+                                                <div className="squad-player-name">{player.name}</div>
+                                                <div className="squad-player-pos">{player.team_name}</div>
+                                                <div className="squad-player-stats">
+                                                    <span>{player.goals || 0}G</span>
+                                                    <span> </span>
+                                                    <span>{player.assists || 0}A</span>
                                                 </div>
                                             </div>
                                         ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
     );
 }
-
 // Nations -----------------------------------------------------------------------------------
 function Nations() {
     const [players, setPlayers] = useState([]);
@@ -706,142 +549,89 @@ function Nations() {
             setError(null);
         } catch (err) {
             setError('Failed to fetch players.');
-            console.error('Error fetching players:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    // Group players by nation
     const nationStats = players.reduce((acc, player) => {
         const nation = player.nation ? player.nation.split(' ')[1] || player.nation : 'Unknown';
-
         if (!acc[nation]) {
-            acc[nation] = {
-                players: [],
-                totalGoals: 0,
-                totalAssists: 0,
-                totalMinutes: 0,
-                count: 0
-            };
+            acc[nation] = { players: [], totalGoals: 0, totalAssists: 0, count: 0 };
         }
-
         acc[nation].players.push(player);
         acc[nation].totalGoals += player.goals || 0;
         acc[nation].totalAssists += player.assists || 0;
-        acc[nation].totalMinutes += player.minutes_played || 0;
         acc[nation].count += 1;
-
         return acc;
     }, {});
 
-    const sortedNations = Object.entries(nationStats)
-        .sort(([,a], [,b]) => b.count - a.count);
+    const sortedNations = Object.entries(nationStats).sort(([,a], [,b]) => b.count - a.count);
 
-    const cardStyle = {
-        background: 'rgba(0, 212, 255, 0.05)',
-        margin: '1rem auto',
-        padding: '1rem',
-        borderRadius: '10px',
-        maxWidth: '800px',
-        border: '1px solid rgba(0, 212, 255, 0.2)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease'
-    };
-
-    const playerCardStyle = {
-        background: 'rgba(0, 212, 255, 0.03)',
-        margin: '0.5rem 0',
-        padding: '0.8rem',
-        borderRadius: '8px',
-        border: '1px solid rgba(0, 212, 255, 0.1)'
-    };
+    console.log("Nation names in database:", sortedNations.map(([nation]) => nation));
 
     return (
-        <div>
-            <h2>Player Nations</h2>
-            <p>Premier League players grouped by nationality</p>
-
-            {loading && <p>Loading nations data...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+        <div className="page-content">
+            {loading && <div className="loading-message">Loading...</div>}
+            {error && <div className="error-message">{error}</div>}
 
             {!loading && !error && (
-                <div>
-                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <p style={{ fontSize: '1.1rem', color: '#666' }}>
-                            {sortedNations.length} nations represented with {players.length} total players
-                        </p>
+                <div className="table-container">
+                    <div className="table-header-row">
+                        <div className="table-title">Nations</div>
+                        <div className="table-count">{sortedNations.length} nations</div>
                     </div>
 
-                    {sortedNations.map(([nation, stats]) => (
-                        <div
-                            key={nation}
-                            style={{
-                                ...cardStyle,
-                                transform: selectedNation === nation ? 'scale(1.02)' : 'scale(1)',
-                                borderColor: selectedNation === nation ? '#00d4ff' : 'rgba(0, 212, 255, 0.2)'
-                            }}
-                            onClick={() => setSelectedNation(selectedNation === nation ? '' : nation)}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ color: '#00d4ff', margin: 0, fontSize: '1.5rem' }}>
-                                        {nation}
-                                    </h3>
-                                    <p style={{ margin: '0.5rem 0', color: '#666' }}>
-                                        {stats.count} players
-                                    </p>
+                    <div className="league-table">
+                        <div className="league-table-header">
+                            <div className="col-rank">#</div>
+                            <div className="col-team">Nation</div>
+                            <div className="col-stat">Players</div>
+                            <div className="col-stat">Goals</div>
+                            <div className="col-stat">Assists</div>
+                        </div>
+                        {sortedNations.map(([nation, stats], idx) => (
+                            <div key={nation}>
+                                <div
+                                    className={`league-table-row ${selectedNation === nation ? 'row-expanded' : ''}`}
+                                    onClick={() => setSelectedNation(selectedNation === nation ? '' : nation)}
+                                >
+                                    <div className="col-rank">
+                                        <div className="rank-badge">{idx + 1}</div>
+                                    </div>
+                                    <div className="col-team">
+                                        <div className="team-badge">
+                                            {getNationFlag(nation) ? (
+                                                <img src={getNationFlag(nation)} alt={nation} style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px'}} />
+                                            ) : (
+                                                nation.substring(0, 3).toUpperCase()
+                                            )}
+                                        </div>
+                                        <span className="team-name-full">{nation}</span>
+                                    </div>
+                                    <div className="col-stat">{stats.count}</div>
+                                    <div className="col-stat stat-highlight">{stats.totalGoals}</div>
+                                    <div className="col-stat stat-highlight">{stats.totalAssists}</div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '2rem', textAlign: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {stats.totalGoals}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Goals</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {stats.totalAssists}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Assists</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                            {Math.round(stats.totalMinutes / stats.count)}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Avg Mins</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {selectedNation === nation && (
-                                <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(0, 212, 255, 0.2)', paddingTop: '1rem' }}>
-                                    <h4 style={{ color: '#00d4ff', marginBottom: '1rem' }}>Players from {nation}:</h4>
-                                    {stats.players
-                                        .sort((a, b) => (b.goals || 0) - (a.goals || 0))
-                                        .map((player, index) => (
-                                            <div key={`${player.name}-${index}`} style={playerCardStyle}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div>
-                                                        <strong style={{ color: '#ffffff' }}>{player.name}</strong>
-                                                        <span style={{ marginLeft: '1rem', color: '#666' }}>
-                              {player.team_name} - {player.position}
-                            </span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem' }}>
-                                                        <span>{player.goals || 0}G</span>
-                                                        <span>{player.assists || 0}A</span>
-                                                        <span>{player.minutes_played || 0}min</span>
-                                                    </div>
+                                {selectedNation === nation && (
+                                    <div className="squad-expansion">
+                                        {stats.players.sort((a, b) => (b.goals || 0) - (a.goals || 0)).map((player, idx) => (
+                                            <div key={idx} className="squad-player-row">
+                                                <div className="squad-player-name">{player.name}</div>
+                                                <div className="squad-player-pos">{player.team_name} - {player.position}</div>
+                                                <div className="squad-player-stats">
+                                                    <span>{player.goals || 0}G</span>
+                                                    <span> </span>
+                                                    <span>{player.assists || 0}A</span>
                                                 </div>
                                             </div>
                                         ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -860,104 +650,68 @@ function Prediction() {
             setError(null);
             const response = await axios.get('http://localhost:1212/api/v1/predictions');
             setPredictions(response.data);
+
+            console.log("Prediction team names:", response.data.map(p => p.teamName));
+
+
         } catch (err) {
-            setError('Failed to load predictions. Please try again.');
-            console.error('Error fetching predictions:', err);
+            setError('Failed to load predictions.');
         } finally {
             setLoading(false);
         }
     };
 
-    const cardStyle = {
-        background: 'rgba(0, 212, 255, 0.05)',
-        margin: '0.5rem auto',
-        padding: '1rem',
-        borderRadius: '10px',
-        maxWidth: '600px',
-        border: '1px solid rgba(0, 212, 255, 0.2)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    };
-
-    const buttonStyle = {
-        background: '#00d4ff',
-        color: '#000',
-        border: 'none',
-        padding: '1rem 2rem',
-        borderRadius: '25px',
-        fontSize: '1.1rem',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        marginBottom: '2rem'
-    };
-
     return (
-        <div>
-            <h2>2025-26 Season Predictor</h2>
-            <p>AI-powered predictions based on historical Premier League data</p>
-
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <button
-                    style={buttonStyle}
-                    onClick={fetchPredictions}
-                    disabled={loading}
-                >
-                    {loading ? 'Loading...' : 'Generate Table'}
+        <div className="page-content">
+            <div className="prediction-header">
+                <button className="generate-btn" onClick={fetchPredictions} disabled={loading}>
+                    {loading ? 'Generating...' : 'Generate Predictions'}
                 </button>
             </div>
 
-            {error && (
-                <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>
-            )}
+            {error && <div className="error-message">{error}</div>}
 
             {predictions.length > 0 && (
-                <div>
-                    <h3 style={{ color: '#00d4ff', textAlign: 'center', marginBottom: '1.5rem' }}>
-                        Predicted 2025-26 Premier League Table
-                    </h3>
+                <div className="table-container">
+                    <div className="table-header-row">
+                        <div className="table-title">2025-26 Predicted Table</div>
+                    </div>
 
-                    {predictions.map((prediction) => (
-                        <div key={prediction.id} style={cardStyle}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{
-                                    background: prediction.predictedRank <= 4 ? '#00d4ff' :
-                                        prediction.predictedRank <= 6 ? '#ffa500' :
-                                            prediction.predictedRank >= 18 ? '#ff4444' : '#666',
-                                    color: '#fff',
-                                    width: '30px',
-                                    height: '30px',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 'bold'
-                                }}>
-                                    {prediction.predictedRank}
-                                </div>
-                                <div>
-                                    <strong style={{ fontSize: '1.1rem' }}>{prediction.teamName}</strong>
-                                </div>
-                            </div>
-
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#00d4ff' }}>
-                                    {Math.round(prediction.predictedPoints)} pts
-                                </div>
-                                <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                                    {prediction.predictedPoints.toFixed(1)} predicted
-                                </div>
-                            </div>
+                    <div className="league-table">
+                        <div className="league-table-header">
+                            <div className="col-rank">#</div>
+                            <div className="col-team">Team</div>
+                            <div className="col-stat">PTS</div>
                         </div>
-                    ))}
+                        {predictions.map((pred) => (
+                            <div key={pred.id} className="league-table-row">
+                                <div className="col-rank">
+                                    <div className={`rank-badge 
+                                        ${pred.predictedRank <= 4 ? 'rank-top' : ''}
+                                        ${pred.predictedRank > 4 && pred.predictedRank <= 6 ? 'rank-europe' : ''}
+                                        ${pred.predictedRank >= 18 ? 'rank-danger' : ''}
+                                    `}>
+                                        {pred.predictedRank}
+                                    </div>
+                                </div>
+                                <div className="col-team">
+                                    <div className="team-badge">
+                                        {getTeamLogo(pred.teamName) ? (
+                                            <img src={getTeamLogo(pred.teamName)} alt={pred.teamName} style={{width: '100%', height: '100%', objectFit: 'contain', padding: '4px'}} />
+                                        ) : (
+                                            pred.teamName.substring(0, 3).toUpperCase()
+                                        )}
+                                    </div>
+                                    <span className="team-name-full">{pred.teamName}</span>
+                                </div>
+                                <div className="col-stat stat-bold">{Math.round(pred.predictedPoints)}</div>
+                            </div>
+                        ))}
+                    </div>
 
-                    <div style={{ marginTop: '2rem', padding: '1rem', textAlign: 'center',
-                        background: 'rgba(0, 212, 255, 0.03)', borderRadius: '10px' }}>
-                        <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>
-                            Predictions based on RandomForest model trained on 2020-2024 Premier League data
-                        </p>
+                    <div className="prediction-footer">
+                        Based on RandomForest model
+                        trained on 2020-2024 PL data
                     </div>
                 </div>
             )}
@@ -967,23 +721,57 @@ function Prediction() {
 
 // APP -----------------------------------------------------------------------------------
 function App() {
+    const [activeTab, setActiveTab] = useState('/');
+
     return (
         <Router>
-            <div className="App">
-                <header>
-                    <h1>🏆 Premier League Dashboard</h1>
-
-                    <nav>
-                        <Link to="/">Home</Link>
-                        <Link to="/teams">Teams</Link>
-                        <Link to="/positions">Positions</Link>
-                        <Link to="/nations">Nations</Link>
-                        <Link to="/search">Search Players</Link>
-                        <Link to="/prediction">League Prediction</Link>
-                    </nav>
+            <div className="app-container">
+                <header className="app-header">
+                    <div className="header-content">
+                        <h1 className="app-logo">THE 12TH MAN</h1>
+                    </div>
                 </header>
 
-                <main>
+                <div className="league-header">
+                    <div className="league-info">
+                        <div className="league-badge">
+                            <img
+                                src="/EnglishPremierLeague.png"
+                                alt="Premier League"
+                                style={{width: '100%', height: '100%', objectFit: 'contain'}}
+                            />
+                        </div>
+                        <div className="league-text">
+                            <h2 className="league-name">Premier League</h2>
+                            <div className="league-country">England</div>
+                        </div>
+                    </div>
+                    <div className="season-selector">2025/2026</div>
+                </div>
+
+                <nav className="main-nav">
+                    <div className="nav-content">
+                        {[
+                            { path: '/', label: 'Overview' },
+                            { path: '/teams', label: 'Teams' },
+                            { path: '/positions', label: 'Positions' },
+                            { path: '/nations', label: 'Nations' },
+                            { path: '/search', label: 'Search' },
+                            { path: '/prediction', label: 'Prediction' }
+                        ].map(({ path, label }) => (
+                            <Link
+                                key={path}
+                                to={path}
+                                onClick={() => setActiveTab(path)}
+                                className={`nav-tab ${activeTab === path ? 'nav-tab-active' : ''}`}
+                            >
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
+                </nav>
+
+                <main className="main-content">
                     <Routes>
                         <Route path="/" element={<Welcome />} />
                         <Route path="/teams" element={<Teams />} />
@@ -993,6 +781,859 @@ function App() {
                         <Route path="/prediction" element={<Prediction />} />
                     </Routes>
                 </main>
+
+                <style>{`
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+
+                    .app-container {
+                        background: #181818;
+                        background-image: 
+                            radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.05) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
+                            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(74, 222, 128, 0.03) 2px, rgba(74, 222, 128, 0.03) 4px);
+                        min-height: 100vh;
+                        color: #fff;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                    }
+
+                    .app-header {
+                        background: linear-gradient(135deg, #1f1f1f 0%, #252525 100%);
+                        border-bottom: 1px solid #2a2a2a;
+                        padding: 1rem 0;
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .app-header::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: -100%;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.1), transparent);
+                        animation: shimmer 3s infinite;
+                    }
+
+                    @keyframes shimmer {
+                        0% { left: -100%; }
+                        100% { left: 200%; }
+                    }
+
+                    .header-content {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        padding: 0 1.5rem;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+
+                    .app-logo {
+                        font-size: 1.3rem;
+                        font-weight: 700;
+                        letter-spacing: -0.5px;
+                        background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                    }
+
+                    .league-header {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        padding: 2rem 1.5rem;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+
+                    .league-info {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                    }
+
+                    .league-badge {
+                        width: 80px;
+                        height: 80px;
+                        background: #fff;
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0px;
+                        box-shadow: 0 4px 20px rgba(74, 222, 128, 0.4);
+                        animation: pulse 3s ease-in-out infinite;
+}
+
+                    @keyframes pulse {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                    }
+
+                    .league-name {
+                        font-size: 1.8rem;
+                        font-weight: 700;
+                        margin-bottom: 0.25rem;
+                    }
+
+                    .league-country {
+                        color: #888;
+                        font-size: 0.9rem;
+                    }
+
+                    .season-selector {
+                        background: linear-gradient(135deg, #2a2a2a, #242424);
+                        padding: 0.6rem 1.2rem;
+                        border-radius: 8px;
+                        font-size: 0.95rem;
+                        cursor: pointer;
+                        border: 1px solid #333;
+                        transition: all 0.3s ease;
+                    }
+
+                    .season-selector:hover {
+                        border-color: #4ade80;
+                        box-shadow: 0 0 15px rgba(74, 222, 128, 0.2);
+                        transform: translateY(-2px);
+                    }
+
+                    .main-nav {
+                        background: #1f1f1f;
+                        border-bottom: 1px solid #2a2a2a;
+                        position: sticky;
+                        top: 0;
+                        z-index: 100;
+                    }
+
+                    .nav-content {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        padding: 0 1.5rem;
+                        display: flex;
+                        gap: 0.5rem;
+                    }
+
+                    .nav-tab {
+                        padding: 1rem 1.2rem;
+                        color: #888;
+                        text-decoration: none;
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        border-bottom: 2px solid transparent;
+                        transition: all 0.2s;
+                    }
+
+                    .nav-tab:hover {
+                        color: #fff;
+                    }
+
+                    .nav-tab-active {
+                        color: #fff;
+                        border-bottom-color: #4ade80;
+                        position: relative;
+                    }
+
+                    .nav-tab-active::after {
+                        content: '';
+                        position: absolute;
+                        bottom: -2px;
+                        left: 0;
+                        right: 0;
+                        height: 2px;
+                        background: linear-gradient(90deg, #4ade80, #22c55e);
+                        box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+                    }
+
+                    .main-content {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        padding: 1.5rem;
+                    }
+
+                    .page-content {
+                        animation: fadeIn 0.2s ease;
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+
+                    .stats-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 1rem;
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .stat-card {
+                        background: linear-gradient(135deg, #2a2a2a, #242424);
+                        border-radius: 12px;
+                        padding: 1.5rem;
+                        border: 1px solid #333;
+                        transition: all 0.3s ease;
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .stat-card::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 3px;
+                        background: linear-gradient(90deg, #4ade80, #22c55e);
+                        transform: scaleX(0);
+                        transition: transform 0.3s ease;
+                    }
+
+                    .stat-card:hover {
+                        transform: translateY(-4px);
+                        border-color: #4ade80;
+                        box-shadow: 0 8px 30px rgba(74, 222, 128, 0.2);
+                    }
+
+                    .stat-card:hover::before {
+                        transform: scaleX(1);
+                    }
+
+                    .stat-card-value {
+                        font-size: 2rem;
+                        font-weight: 700;
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                        margin-bottom: 0.5rem;
+                    }
+
+                    .stat-card-label {
+                        color: #888;
+                        font-size: 0.9rem;
+                    }
+
+                    .content-row {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 1rem;
+                    }
+
+                    .content-card {
+                        background: linear-gradient(135deg, #2a2a2a, #242424);
+                        border-radius: 12px;
+                        overflow: hidden;
+                        border: 1px solid #333;
+                        transition: all 0.3s ease;
+                    }
+
+                    .content-card:hover {
+                        border-color: #4ade80;
+                        box-shadow: 0 8px 30px rgba(74, 222, 128, 0.15);
+                        transform: translateY(-2px);
+                    }
+
+                    .card-header {
+                        padding: 1rem 1.25rem;
+                        border-bottom: 1px solid #333;
+                    }
+
+                    .card-title {
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                    }
+
+                    .leader-list {
+                        padding: 0.5rem 0;
+                    }
+
+                    .leader-item {
+                        display: flex;
+                        align-items: center;
+                        padding: 0.75rem 1.25rem;
+                        gap: 1rem;
+                        transition: all 0.3s ease;
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .leader-item::before {
+                        content: '';
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        bottom: 0;
+                        width: 3px;
+                        background: linear-gradient(180deg, #4ade80, #22c55e);
+                        transform: scaleY(0);
+                        transition: transform 0.3s ease;
+                    }
+
+                    .leader-item:hover {
+                        background: #2a2a2a;
+                        transform: translateX(8px);
+                    }
+
+                    .leader-item:hover::before {
+                        transform: scaleY(1);
+                    }
+
+                    .leader-rank {
+                        width: 24px;
+                        height: 24px;
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        color: #000;
+                        box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+                    }
+
+                    .leader-info {
+                        flex: 1;
+                    }
+
+                    .leader-name {
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        margin-bottom: 0.2rem;
+                    }
+
+                    .leader-team {
+                        font-size: 0.8rem;
+                        color: #888;
+                    }
+
+                    .leader-stat {
+                        font-size: 1.1rem;
+                        font-weight: 700;
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                    }
+
+                    .table-container {
+                        background: linear-gradient(135deg, #2a2a2a, #242424);
+                        border-radius: 12px;
+                        overflow: hidden;
+                        border: 1px solid #333;
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                    }
+
+                    .table-header-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 1rem 1.25rem;
+                        border-bottom: 1px solid #333;
+                    }
+
+                    .table-title {
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                    }
+
+                    .table-count {
+                        color: #888;
+                        font-size: 0.9rem;
+                    }
+
+                    .league-table {
+                        overflow-x: auto;
+                    }
+
+                    .league-table-header {
+                        display: grid;
+                        grid-template-columns: 50px 1fr 60px 60px 60px;
+                        padding: 0.75rem 1.25rem;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                        color: #888;
+                        text-transform: uppercase;
+                        border-bottom: 1px solid #333;
+                    }
+
+                    .league-table-row {
+                        display: grid;
+                        grid-template-columns: 50px 1fr 60px 60px 60px;
+                        padding: 0.75rem 1.25rem;
+                        border-bottom: 1px solid #333;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        align-items: center;
+                    }
+
+                    .league-table-row:hover {
+                        background: linear-gradient(90deg, #333, #2e2e2e);
+                        transform: translateX(4px);
+                    }
+
+                    .league-table-row:last-child {
+                        border-bottom: none;
+                    }
+
+                    .row-expanded {
+                        background: #333;
+                    }
+
+                    .col-rank {
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    .rank-badge {
+                        width: 32px;
+                        height: 32px;
+                        background: #2a2a2a;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        border: 2px solid #333;
+                        transition: all 0.3s ease;
+                    }
+
+                    .rank-top {
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        color: #000;
+                        border-color: #16a34a;
+                        box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+                        animation: glow-green 2s ease-in-out infinite;
+                    }
+
+                    @keyframes glow-green {
+                        0%, 100% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.6); }
+                        50% { box-shadow: 0 0 30px rgba(74, 222, 128, 0.8), 0 0 40px rgba(74, 222, 128, 0.4); }
+                    }
+
+                    .rank-europe {
+                        background: linear-gradient(135deg, #fb923c, #f59e0b);
+                        color: #000;
+                        border-color: #ea580c;
+                        box-shadow: 0 0 20px rgba(251, 146, 60, 0.6);
+                        animation: glow-orange 2s ease-in-out infinite;
+                    }
+
+                    @keyframes glow-orange {
+                        0%, 100% { box-shadow: 0 0 20px rgba(251, 146, 60, 0.6); }
+                        50% { box-shadow: 0 0 30px rgba(251, 146, 60, 0.8), 0 0 40px rgba(251, 146, 60, 0.4); }
+                    }
+
+                    .rank-danger {
+                        background: linear-gradient(135deg, #ef4444, #dc2626);
+                        color: #fff;
+                        border-color: #b91c1c;
+                        box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+                        animation: glow-red 2s ease-in-out infinite;
+                    }
+
+                    @keyframes glow-red {
+                        0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+                        50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.4); }
+                    }
+
+                    .col-team {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                    }
+
+                    .team-badge {
+                        width: 48px;
+                        height: 48px;
+                        background: linear-gradient(135deg, #1f1f1f, #2a2a2a);
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.7rem;
+                        font-weight: 700;
+                        border: 2px solid #4ade80;
+                        box-shadow: 0 4px 15px rgba(74, 222, 128, 0.25);
+                        transition: all 0.3s ease;
+                        position: relative;
+                    }
+
+                    .team-badge::after {
+                        content: '';
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 8px;
+                        padding: 2px;
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                        -webkit-mask-composite: xor;
+                        mask-composite: exclude;
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                    }
+
+                    .league-table-row:hover .team-badge {
+                        transform: scale(1.15) rotate(5deg);
+                        border-color: #22c55e;
+                        box-shadow: 0 6px 25px rgba(74, 222, 128, 0.5);
+                    }
+
+                    .league-table-row:hover .team-badge::after {
+                        opacity: 1;
+                    }
+
+                    .team-name-full {
+                        font-weight: 500;
+                    }
+
+                    .col-stat {
+                        text-align: center;
+                        font-size: 0.9rem;
+                    }
+
+                    .stat-highlight {
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                        font-weight: 600;
+                    }
+
+                    .stat-bold {
+                        font-weight: 700;
+                        font-size: 1rem;
+                    }
+
+                    .squad-expansion {
+                        background: linear-gradient(180deg, #222, #1e1e1e);
+                        border-top: 2px solid #4ade80;
+                        animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .squad-expansion::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: -100%;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.1), transparent);
+                        animation: shimmerExpansion 2s ease-in-out;
+                    }
+
+                    @keyframes slideDown {
+                        from {
+                            opacity: 0;
+                            max-height: 0;
+                            transform: translateY(-20px);
+                        }
+                        to {
+                            opacity: 1;
+                            max-height: 1000px;
+                            transform: translateY(0);
+                        }
+                    }
+
+                    @keyframes shimmerExpansion {
+                        0% { left: -100%; }
+                        100% { left: 100%; }
+                    }
+
+                    .squad-player-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 1.25rem 1.5rem 1.25rem 3rem;
+                        border-bottom: 2px solid #333;
+                        font-size: 0.9rem;
+                        transition: all 0.3s ease;
+                        position: relative;
+                        animation: fadeInPlayer 0.4s ease forwards;
+                        opacity: 0;
+                        margin-bottom: 0.5rem;
+                        background: linear-gradient(90deg, rgba(42, 42, 42, 0.3), transparent);
+                    }
+
+                    @keyframes fadeInPlayer {
+                        from {
+                            opacity: 0;
+                            transform: translateX(-20px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateX(0);
+                        }
+                    }
+
+                    .squad-player-row:nth-child(1) { animation-delay: 0.05s; }
+                    .squad-player-row:nth-child(2) { animation-delay: 0.1s; }
+                    .squad-player-row:nth-child(3) { animation-delay: 0.15s; }
+                    .squad-player-row:nth-child(4) { animation-delay: 0.2s; }
+                    .squad-player-row:nth-child(5) { animation-delay: 0.25s; }
+                    .squad-player-row:nth-child(n+6) { animation-delay: 0.3s; }
+
+                    .squad-player-row::before {
+                        content: '';
+                        position: absolute;
+                        left: 1.5rem;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        width: 4px;
+                        height: 0;
+                        background: linear-gradient(180deg, #4ade80, #22c55e);
+                        border-radius: 2px;
+                        transition: height 0.3s ease;
+                    }
+
+                    .squad-player-row:hover {
+                        background: linear-gradient(90deg, rgba(74, 222, 128, 0.1), transparent);
+                        padding-left: 3.5rem;
+                        border-left: 3px solid #4ade80;
+                    }
+
+                    .squad-player-row:hover::before {
+                        height: 60%;
+                    }
+
+                    .squad-player-row:last-child {
+                        border-bottom: none;
+                    }
+
+                    .search-section {
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .search-input-box {
+                        width: 100%;
+                        background: #2a2a2a;
+                        border: 1px solid #333;
+                        border-radius: 8px;
+                        padding: 0.85rem 1rem;
+                        color: #fff;
+                        font-size: 0.95rem;
+                    }
+
+                    .search-input-box::placeholder {
+                        color: #666;
+                    }
+
+                    .search-input-box:focus {
+                        outline: none;
+                        border-color: #4ade80;
+                        box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+                    }
+
+                    .data-table {
+                        overflow: hidden;
+                    }
+
+                    .table-row {
+                        border-bottom: 1px solid #333;
+                        transition: background 0.2s;
+                    }
+
+                    .table-row:hover {
+                        background: #333;
+                    }
+
+                    .table-row:last-child {
+                        border-bottom: none;
+                    }
+
+                    .row-main {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 0.85rem 1.25rem;
+                    }
+
+                    .player-info-cell {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        flex: 1;
+                    }
+
+                    .player-avatar {
+                        width: 40px;
+                        height: 40px;
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        color: #000;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 700;
+                        font-size: 0.85rem;
+                        box-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+                        transition: all 0.3s ease;
+                    }
+
+                    .table-row:hover .player-avatar {
+                        transform: scale(1.1) rotate(5deg);
+                        box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+                    }
+
+                    .player-text {
+                        flex: 1;
+                    }
+
+                    .player-name-text {
+                        font-weight: 500;
+                        margin-bottom: 0.2rem;
+                    }
+
+                    .player-meta-text {
+                        font-size: 0.85rem;
+                        color: #888;
+                    }
+
+                    .stats-cell {
+                        display: flex;
+                        gap: 1.5rem;
+                        align-items: center;
+                    }
+
+                    .stat-group {
+                        display: flex;
+                        align-items: baseline;
+                        gap: 0.3rem;
+                    }
+
+                    .stat-num {
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                    }
+
+                    .stat-lbl {
+                        font-size: 0.75rem;
+                        color: #888;
+                    }
+
+                    .prediction-header {
+                        text-align: center;
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .generate-btn {
+                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        color: #000;
+                        border: none;
+                        padding: 0.85rem 2rem;
+                        border-radius: 10px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 20px rgba(74, 222, 128, 0.3);
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .generate-btn::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: -100%;
+                        width:
+                        .generate-btn::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: -100%;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                        transition: left 0.5s;
+                    }
+
+                    .generate-btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 30px rgba(74, 222, 128, 0.5);
+                    }
+
+                    .generate-btn:hover::before {
+                        left: 100%;
+                    }
+
+                    .generate-btn:disabled {
+                        background: #333;
+                        color: #666;
+                        cursor: not-allowed;
+                        transform: none;
+                    }
+
+                    .prediction-footer {
+                        padding: 1rem 1.25rem;
+                        text-align: center;
+                        font-size: 0.85rem;
+                        color: #888;
+                        border-top: 1px solid #333;
+                    }
+
+                    .loading-message,
+                    .error-message {
+                        text-align: center;
+                        padding: 2rem;
+                        font-size: 0.95rem;
+                    }
+
+                    .error-message {
+                        color: #ef4444;
+                    }
+
+                    @media (max-width: 768px) {
+                        .league-header {
+                            flex-direction: column;
+                            align-items: flex-start;
+                            gap: 1rem;
+                        }
+
+                        .nav-content {
+                            overflow-x: auto;
+                        }
+
+                        .stats-grid {
+                            grid-template-columns: repeat(2, 1fr);
+                        }
+
+                        .content-row {
+                            grid-template-columns: 1fr;
+                        }
+
+                        .stats-cell {
+                            gap: 0.75rem;
+                        }
+
+                        .stat-group {
+                            flex-direction: column;
+                            gap: 0;
+                            text-align: center;
+                        }
+
+                        .league-table-header,
+                        .league-table-row {
+                            grid-template-columns: 40px 1fr 50px 50px 50px;
+                            font-size: 0.85rem;
+                        }
+
+                        .team-badge {
+                            width: 40px;
+                            height: 40px;
+                            font-size: 0.65rem;
+                        }
+                    }
+                `}</style>
             </div>
         </Router>
     );
