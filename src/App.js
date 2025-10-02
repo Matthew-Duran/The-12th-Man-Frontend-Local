@@ -2,7 +2,9 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
 import React, { useEffect, useState } from "react";
-import supabase from "./supabaseClient";
+
+// Backend URL
+const BACKEND_URL = 'https://premier-league-api-6lv7.onrender.com';
 
 // Logo mappings
 const TEAM_LOGOS = {
@@ -70,21 +72,15 @@ const getPositionIcon = (position) => {
         "MF,DF": "🔗",
         "DF,FW": "⚔️",
         "FW,DF": "🦅"
-
     };
-
     return icons[position] || "👤";
 };
-
 
 const getTeamLogo = (teamName) => TEAM_LOGOS[teamName] || "";
 const getNationFlag = (nation) => {
     const countryCode = NATION_FLAGS[nation];
     return countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : "";
 };
-
-
-// Player Recommendation  -----------------------------------------------------------------------------------
 
 const getPlayerRecommendation = (player) => {
     const goalsPerGame = (player.goals || 0) / (player.matches_played || 1);
@@ -95,7 +91,6 @@ const getPlayerRecommendation = (player) => {
     let score = 0;
     let reasons = [];
 
-    // Scoring based on position
     if (player.position === 'FW' || player.position === 'FW,MF') {
         if (goalsPerGame >= 0.5) { score += 3; reasons.push('Excellent goal scoring rate'); }
         else if (goalsPerGame >= 0.3) { score += 2; reasons.push('Good goal scoring rate'); }
@@ -111,7 +106,6 @@ const getPlayerRecommendation = (player) => {
         if (startsRatio >= 0.8) { score += 2; reasons.push('Solid defensive contribution'); }
         if (minutesPerGame >= 80) { score += 1; reasons.push('Plays full matches'); }
         score += 1;
-
     }
 
     if (startsRatio >= 0.8) { score += 2; reasons.push('Regular starter'); }
@@ -130,8 +124,7 @@ const getPlayerRecommendation = (player) => {
     return { rating: 'Risky Pick', color: '#ef4444', reasons };
 };
 
-
-// Search Players -----------------------------------------------------------------------------------
+// Search Players
 function SearchPlayers() {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -146,11 +139,8 @@ function SearchPlayers() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-
-            let { data, error } = await supabase.from("player_statistic").select("*");
-            if (error) throw error;
-            setPlayers(data);
-
+            const response = await axios.get(`${BACKEND_URL}/api/v1/player`);
+            setPlayers(response.data);
             setError(null);
         } catch (err) {
             setError('Failed to fetch players. Make sure your backend is running.');
@@ -159,7 +149,6 @@ function SearchPlayers() {
             setLoading(false);
         }
     };
-
 
     const filteredPlayers = players.filter(player =>
         player.name && player.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -257,38 +246,11 @@ function SearchPlayers() {
                     </div>
                 </div>
             )}
-
-            {selectedPlayer && (
-                <div className="player-modal" onClick={() => setSelectedPlayer(null)}>
-                    <div className="player-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close" onClick={() => setSelectedPlayer(null)}>×</button>
-                        <h2>{selectedPlayer.name}</h2>
-                        <div className="player-details">
-                            <p><strong>Team:</strong> {selectedPlayer.team_name}</p>
-                            <p><strong>Position:</strong> {selectedPlayer.position}</p>
-                            <p><strong>Stats:</strong> {selectedPlayer.goals || 0}G / {selectedPlayer.assists || 0}A in {selectedPlayer.matches_played || 0} matches</p>
-                        </div>
-                        {(() => {
-                            const rec = getPlayerRecommendation(selectedPlayer);
-                            return (
-                                <div className="recommendation-box" style={{borderColor: rec.color}}>
-                                    <h3 style={{color: rec.color}}>{rec.rating}</h3>
-                                    <ul className="recommendation-reasons">
-                                        {rec.reasons.map((reason, idx) => (
-                                            <li key={idx}>{reason}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            );
-                        })()}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
 
-// Welcome -----------------------------------------------------------------------------------
+// Welcome
 function Welcome() {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -300,8 +262,7 @@ function Welcome() {
 
     const fetchPlayers = async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
-
+            const response = await axios.get(`${BACKEND_URL}/api/v1/player`);
             const playerData = response.data;
             setPlayers(playerData);
 
@@ -419,16 +380,14 @@ function Welcome() {
 
 function getRankColor(idx, totalTeams) {
     const ratio = idx / totalTeams;
-    if (ratio < 0.2) return "rank-blue";     // Top 20%
-    if (ratio < 0.4) return "rank-green";    // Next 20%
-    if (ratio < 0.6) return "rank-yellow";   // Middle 20%
-    if (ratio < 0.8) return "rank-orange";   // Next 20%
-    return "rank-red";                       // Bottom 20%
+    if (ratio < 0.2) return "rank-blue";
+    if (ratio < 0.4) return "rank-green";
+    if (ratio < 0.6) return "rank-yellow";
+    if (ratio < 0.8) return "rank-orange";
+    return "rank-red";
 }
 
-
-
-// Teams -----------------------------------------------------------------------------------
+// Teams
 function Teams() {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -442,8 +401,7 @@ function Teams() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
-
+            const response = await axios.get(`${BACKEND_URL}/api/v1/player`);
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -472,8 +430,6 @@ function Teams() {
     }, {});
 
     const sortedTeams = Object.entries(teamStats).sort(([,a], [,b]) => b.totalGoals - a.totalGoals);
-
-    console.log("Team names in database:", sortedTeams.map(([team]) => team));
 
     return (
         <div className="page-content">
@@ -507,7 +463,6 @@ function Teams() {
                                         <div className={`rank-badge ${getRankColor(idx, sortedTeams.length)}`}>
                                             {idx + 1}
                                         </div>
-
                                     </div>
                                     <div className="col-team">
                                         <div className="team-badge">
@@ -550,7 +505,7 @@ function Teams() {
     );
 }
 
-// Positions -----------------------------------------------------------------------------------
+// Positions
 function Positions() {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -564,8 +519,7 @@ function Positions() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
-
+            const response = await axios.get(`${BACKEND_URL}/api/v1/player`);
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -595,9 +549,6 @@ function Positions() {
             avgAssists: (stats.totalAssists / stats.count).toFixed(1)
         }))
         .sort((a, b) => b.count - a.count);
-
-    console.log("Position names in database:", sortedPositions.map(p => p.position));
-
 
     return (
         <div className="page-content">
@@ -659,7 +610,8 @@ function Positions() {
         </div>
     );
 }
-// Nations -----------------------------------------------------------------------------------
+
+// Nations
 function Nations() {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -673,9 +625,8 @@ function Nations() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/player`);
-
-            console.log('Nations data loaded:', response.data.length, 'players');
+            const response = await axios.get(`${BACKEND_URL}/api/v1/player`);
+            setPlayers(response.data);
             setError(null);
         } catch (err) {
             setError('Failed to fetch players.');
@@ -697,8 +648,6 @@ function Nations() {
     }, {});
 
     const sortedNations = Object.entries(nationStats).sort(([,a], [,b]) => b.count - a.count);
-
-    console.log("Nation names in database:", sortedNations.map(([nation]) => nation));
 
     return (
         <div className="page-content">
@@ -768,7 +717,7 @@ function Nations() {
     );
 }
 
-// Prediction -----------------------------------------------------------------------------------
+// Prediction
 function Prediction() {
     const [predictions, setPredictions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -778,13 +727,8 @@ function Prediction() {
         try {
             setLoading(true);
             setError(null);
-
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/predictions`);
-
-
+            const response = await axios.get(`${BACKEND_URL}/api/v1/predictions`);
             setPredictions(response.data);
-            console.log("Prediction team names:", response.data.map(p => p.teamName));
-
         } catch (err) {
             console.error(err);
             setError("Failed to load predictions.");
@@ -880,8 +824,8 @@ function Prediction() {
     );
 }
 
-// APP -----------------------------------------------------------------------------------
-function App() {
+// APP
+export default function App() {
     const [activeTab, setActiveTab] = useState('/');
 
     return (
@@ -1166,10 +1110,10 @@ function App() {
                     }
                     
                     .subtitle {
-                    font-size: 0.9rem;
-                    color: #666;
-                    font-weight: normal;
-                }
+                        font-size: 0.9rem;
+                        color: #666;
+                        font-weight: normal;
+                    }
 
                     .stat-card-value {
                         font-size: 2rem;
@@ -1349,12 +1293,11 @@ function App() {
                         border-bottom: none;
                     }
                   
-                  .rank-badge.rank-blue { background-color: #007bff !important; color: white !important; }
+                    .rank-badge.rank-blue { background-color: #007bff !important; color: white !important; }
                     .rank-badge.rank-green { background-color: #28a745 !important; color: white !important; }
                     .rank-badge.rank-yellow { background-color: #ffc107 !important; color: black !important; }
                     .rank-badge.rank-orange { background-color: #fd7e14 !important; color: white !important; }
                     .rank-badge.rank-red { background-color: #dc3545 !important; color: white !important; }
-
 
                     .row-expanded {
                         background: #333;
@@ -1377,45 +1320,6 @@ function App() {
                         font-weight: 700;
                         border: 2px solid #333;
                         transition: all 0.3s ease;
-                    }
-
-                    .rank-top {
-                        background: linear-gradient(135deg, #e90052, #3d195b);
-                        color: #fff;
-                        border-color: #2d0d45;
-                        box-shadow: 0 0 20px rgba(233, 0, 82, 0.6);
-                        animation: glow-magenta 2s ease-in-out infinite;
-                    }
-                    
-                    @keyframes glow-magenta {
-                        0%, 100% { box-shadow: 0 0 20px rgba(233, 0, 82, 0.6); }
-                        50% { box-shadow: 0 0 30px rgba(233, 0, 82, 0.8), 0 0 40px rgba(233, 0, 82, 0.4); }
-                    }
-
-                    .rank-europe {
-                        background: linear-gradient(135deg, #fb923c, #f59e0b);
-                        color: #000;
-                        border-color: #ea580c;
-                        box-shadow: 0 0 20px rgba(251, 146, 60, 0.6);
-                        animation: glow-orange 2s ease-in-out infinite;
-                    }
-
-                    @keyframes glow-orange {
-                        0%, 100% { box-shadow: 0 0 20px rgba(251, 146, 60, 0.6); }
-                        50% { box-shadow: 0 0 30px rgba(251, 146, 60, 0.8), 0 0 40px rgba(251, 146, 60, 0.4); }
-                    }
-
-                    .rank-danger {
-                        background: linear-gradient(135deg, #ef4444, #dc2626);
-                        color: #fff;
-                        border-color: #b91c1c;
-                        box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
-                        animation: glow-red 2s ease-in-out infinite;
-                    }
-
-                    @keyframes glow-red {
-                        0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
-                        50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.4); }
                     }
 
                     .col-team {
@@ -1584,6 +1488,22 @@ function App() {
                         border-bottom: none;
                     }
 
+                    .squad-player-name {
+                        flex: 1;
+                    }
+
+                    .squad-player-pos {
+                        flex: 1;
+                        color: #888;
+                        font-size: 0.85rem;
+                    }
+
+                    .squad-player-stats {
+                        display: flex;
+                        gap: 0.5rem;
+                        font-weight: 600;
+                    }
+
                     .search-section {
                         margin-bottom: 1.5rem;
                     }
@@ -1700,6 +1620,44 @@ function App() {
                         color: #888;
                     }
 
+                    .player-details {
+                        color: #aaa;
+                    }
+
+                    .player-details p {
+                        margin: 0.5rem 0;
+                    }
+
+                    .recommendation-box {
+                        background: #1f1f1f;
+                        border: 3px solid;
+                        border-radius: 12px;
+                        padding: 1.5rem;
+                    }
+
+                    .recommendation-box h3 {
+                        margin: 0 0 1rem 0;
+                        font-size: 1.3rem;
+                    }
+
+                    .recommendation-reasons {
+                        list-style: none;
+                        padding: 0;
+                    }
+
+                    .recommendation-reasons li {
+                        padding: 0.5rem 0;
+                        padding-left: 1.5rem;
+                        position: relative;
+                    }
+
+                    .recommendation-reasons li::before {
+                        content: '→';
+                        position: absolute;
+                        left: 0;
+                        color: #ff1a75;
+                    }
+
                     .prediction-header {
                         text-align: center;
                         margin-bottom: 1.5rem;
@@ -1721,12 +1679,6 @@ function App() {
                     }
 
                     .generate-btn::before {
-                        content: '';
-                        position: absolute;
-                        top: 0;
-                        left: -100%;
-                        width:
-                        .generate-btn::before {
                         content: '';
                         position: absolute;
                         top: 0;
@@ -1771,104 +1723,6 @@ function App() {
                     .error-message {
                         color: #ef4444;
                     }
-                    
-                    .clickable-name {
-                        cursor: pointer;
-                        transition: color 0.2s;
-                    }
-                    
-                    .clickable-name:hover {
-                        color: #ff1a75;
-                        text-decoration: underline;
-                    }
-                    
-                    .player-modal {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        background: rgba(0, 0, 0, 0.8);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 1000;
-                        animation: fadeIn 0.2s;
-                    }
-                    
-                    .player-modal-content {
-                        background: linear-gradient(135deg, #2a2a2a, #242424);
-                        border: 2px solid #ff1a75;
-                        border-radius: 16px;
-                        padding: 2rem;
-                        max-width: 500px;
-                        width: 90%;
-                        position: relative;
-                        box-shadow: 0 10px 50px rgba(233, 0, 82, 0.3);
-                    }
-                    
-                    .modal-close {
-                        position: absolute;
-                        top: 1rem;
-                        right: 1rem;
-                        background: none;
-                        border: none;
-                        color: #fff;
-                        font-size: 2rem;
-                        cursor: pointer;
-                        line-height: 1;
-                    }
-                    
-                    .modal-close:hover {
-                        color: #ff1a75;
-                    }
-                    
-                    .player-modal-content h2 {
-                        margin-bottom: 1rem;
-                        font-size: 1.5rem;
-                    }
-                    
-                    .player-details {
-                        margin-bottom: 1.5rem;
-                        color: #aaa;
-                    }
-                    
-                    .player-details p {
-                        margin: 0.5rem 0;
-                    }
-                    
-                    .recommendation-box {
-                        background: #1f1f1f;
-                        border: 3px solid;
-                        border-radius: 12px;
-                        padding: 1.5rem;
-                        margin-top: 1rem;
-                    }
-                    
-                    .recommendation-box h3 {
-                        margin: 0 0 1rem 0;
-                        font-size: 1.3rem;
-                    }
-                    
-                    .recommendation-reasons {
-                        list-style: none;
-                        padding: 0;
-                    }
-                    
-                    .recommendation-reasons li {
-                        padding: 0.5rem 0;
-                        padding-left: 1.5rem;
-                        position: relative;
-                    }
-                    
-                    .recommendation-reasons li::before {
-                        content: '→';
-                        position: absolute;
-                        left: 0;
-                        color: #ff1a75;
-                    }
-                    
-                    
 
                     @media (max-width: 768px) {
                         .league-header {
@@ -1916,5 +1770,3 @@ function App() {
         </Router>
     );
 }
-
-export default App;
