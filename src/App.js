@@ -75,11 +75,60 @@ const getPositionIcon = (position) => {
     return icons[position] || "👤";
 };
 
+
 const getTeamLogo = (teamName) => TEAM_LOGOS[teamName] || "";
 const getNationFlag = (nation) => {
     const countryCode = NATION_FLAGS[nation];
     return countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : "";
 };
+
+
+// Player Recommendation  -----------------------------------------------------------------------------------
+
+const getPlayerRecommendation = (player) => {
+    const goalsPerGame = (player.goals || 0) / (player.matches_played || 1);
+    const assistsPerGame = (player.assists || 0) / (player.matches_played || 1);
+    const minutesPerGame = (player.minutes_played || 0) / (player.matches_played || 1);
+    const startsRatio = (player.starts || 0) / (player.matches_played || 1);
+
+    let score = 0;
+    let reasons = [];
+
+    // Scoring based on position
+    if (player.position === 'FW' || player.position === 'FW,MF') {
+        if (goalsPerGame >= 0.5) { score += 3; reasons.push('Excellent goal scoring rate'); }
+        else if (goalsPerGame >= 0.3) { score += 2; reasons.push('Good goal scoring rate'); }
+        else { score -= 1; reasons.push('Low goal output'); }
+    }
+
+    if (player.position === 'MF' || player.position.includes('MF')) {
+        if (assistsPerGame >= 0.3) { score += 2; reasons.push('Great playmaking ability'); }
+        if (goalsPerGame >= 0.2) { score += 2; reasons.push('Contributes goals from midfield'); }
+    }
+
+    if (player.position === 'DF' || player.position === 'GK') {
+        if (startsRatio >= 0.8) { score += 2; reasons.push('Solid defensive contribution'); }
+        if (minutesPerGame >= 80) { score += 1; reasons.push('Plays full matches'); }
+        score += 1;
+
+    }
+
+    if (startsRatio >= 0.8) { score += 2; reasons.push('Regular starter'); }
+    else if (startsRatio < 0.5) { score -= 1; reasons.push('Limited playing time'); }
+
+    if (minutesPerGame >= 80) { score += 1; reasons.push('Plays full matches'); }
+
+    if ((player.goals || 0) + (player.assists || 0) >= 10) {
+        score += 2;
+        reasons.push('High goal contributions');
+    }
+
+    if (score >= 5) return { rating: 'Excellent Pick', color: '#4ade80', reasons };
+    if (score >= 3) return { rating: 'Good Pick', color: '#fbbf24', reasons };
+    if (score >= 1) return { rating: 'Decent Option', color: '#fb923c', reasons };
+    return { rating: 'Risky Pick', color: '#ef4444', reasons };
+};
+
 
 // Search Players -----------------------------------------------------------------------------------
 function SearchPlayers() {
@@ -87,6 +136,7 @@ function SearchPlayers() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPlayer, setSelectedPlayer] = useState(null);
 
     useEffect(() => {
         fetchPlayers();
@@ -133,41 +183,99 @@ function SearchPlayers() {
                     </div>
                     <div className="data-table">
                         {filteredPlayers.map((player, index) => (
-                            <div key={`${player.name}-${index}`} className="table-row">
-                                <div className="row-main">
-                                    <div className="player-info-cell">
-                                        <div className="player-avatar">{player.name.substring(0, 2).toUpperCase()}</div>
-                                        <div className="player-text">
-                                            <div className="player-name-text">{player.name}</div>
-                                            <div className="player-meta-text">
-                                                {getTeamLogo(player.team_name) && (
-                                                    <img src={getTeamLogo(player.team_name)} alt={player.team_name} style={{width: '20px', height: '20px', marginRight: '6px', verticalAlign: 'middle'}} />
-                                                )}
-                                                {player.team_name} · {player.position}
+                            <div key={`${player.name}-${index}`}>
+                                <div
+                                    className="table-row"
+                                    onClick={() => setSelectedPlayer(selectedPlayer?.name === player.name ? null : player)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <div className="row-main">
+                                        <div className="player-info-cell">
+                                            <div className="player-avatar">{player.name.substring(0, 2).toUpperCase()}</div>
+                                            <div className="player-text">
+                                                <div className="player-name-text">
+                                                    {player.name}
+                                                </div>
+                                                <div className="player-meta-text">
+                                                    {getTeamLogo(player.team_name) && (
+                                                        <img src={getTeamLogo(player.team_name)} alt={player.team_name} style={{width: '20px', height: '20px', marginRight: '6px', verticalAlign: 'middle'}} />
+                                                    )}
+                                                    {player.team_name} · {player.position}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="stats-cell">
+                                            <div className="stat-group">
+                                                <span className="stat-num">{player.goals || 0}</span>
+                                                <span className="stat-lbl">G</span>
+                                            </div>
+                                            <div className="stat-group">
+                                                <span className="stat-num">{player.assists || 0}</span>
+                                                <span className="stat-lbl">A</span>
+                                            </div>
+                                            <div className="stat-group">
+                                                <span className="stat-num">{player.minutes_played || 0}</span>
+                                                <span className="stat-lbl">MIN</span>
+                                            </div>
+                                            <div className="stat-group">
+                                                <span className="stat-num">{player.starts || 0}/{player.matches_played || 0}</span>
+                                                <span className="stat-lbl">ST</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="stats-cell">
-                                        <div className="stat-group">
-                                            <span className="stat-num">{player.goals || 0}</span>
-                                            <span className="stat-lbl">G</span>
-                                        </div>
-                                        <div className="stat-group">
-                                            <span className="stat-num">{player.assists || 0}</span>
-                                            <span className="stat-lbl">A</span>
-                                        </div>
-                                        <div className="stat-group">
-                                            <span className="stat-num">{player.minutes_played || 0}</span>
-                                            <span className="stat-lbl">MIN</span>
-                                        </div>
-                                        <div className="stat-group">
-                                            <span className="stat-num">{player.starts || 0}/{player.matches_played || 0}</span>
-                                            <span className="stat-lbl">ST</span>
-                                        </div>
-                                    </div>
                                 </div>
+
+                                {selectedPlayer?.name === player.name && (
+                                    <div className="squad-expansion">
+                                        <div className="player-details" style={{ padding: '1.5rem' }}>
+                                            <p><strong>Team:</strong> {selectedPlayer.team_name}</p>
+                                            <p><strong>Position:</strong> {selectedPlayer.position}</p>
+                                            <p><strong>Stats:</strong> {selectedPlayer.goals || 0}G / {selectedPlayer.assists || 0}A in {selectedPlayer.matches_played || 0} matches</p>
+                                        </div>
+                                        {(() => {
+                                            const rec = getPlayerRecommendation(selectedPlayer);
+                                            return (
+                                                <div className="recommendation-box" style={{borderColor: rec.color, margin: '0 1.5rem 1.5rem 1.5rem'}}>
+                                                    <h3 style={{color: rec.color}}>{rec.rating}</h3>
+                                                    <ul className="recommendation-reasons">
+                                                        {rec.reasons.map((reason, idx) => (
+                                                            <li key={idx}>{reason}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {selectedPlayer && (
+                <div className="player-modal" onClick={() => setSelectedPlayer(null)}>
+                    <div className="player-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setSelectedPlayer(null)}>×</button>
+                        <h2>{selectedPlayer.name}</h2>
+                        <div className="player-details">
+                            <p><strong>Team:</strong> {selectedPlayer.team_name}</p>
+                            <p><strong>Position:</strong> {selectedPlayer.position}</p>
+                            <p><strong>Stats:</strong> {selectedPlayer.goals || 0}G / {selectedPlayer.assists || 0}A in {selectedPlayer.matches_played || 0} matches</p>
+                        </div>
+                        {(() => {
+                            const rec = getPlayerRecommendation(selectedPlayer);
+                            return (
+                                <div className="recommendation-box" style={{borderColor: rec.color}}>
+                                    <h3 style={{color: rec.color}}>{rec.rating}</h3>
+                                    <ul className="recommendation-reasons">
+                                        {rec.reasons.map((reason, idx) => (
+                                            <li key={idx}>{reason}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}
@@ -303,6 +411,17 @@ function Welcome() {
     );
 }
 
+function getRankColor(idx, totalTeams) {
+    const ratio = idx / totalTeams;
+    if (ratio < 0.2) return "rank-blue";     // Top 20%
+    if (ratio < 0.4) return "rank-green";    // Next 20%
+    if (ratio < 0.6) return "rank-yellow";   // Middle 20%
+    if (ratio < 0.8) return "rank-orange";   // Next 20%
+    return "rank-red";                       // Bottom 20%
+}
+
+
+
 // Teams -----------------------------------------------------------------------------------
 function Teams() {
     const [players, setPlayers] = useState([]);
@@ -357,7 +476,9 @@ function Teams() {
             {!loading && !error && (
                 <div className="table-container">
                     <div className="table-header-row">
-                        <div className="table-title">Teams</div>
+                        <div className="table-title">
+                            Teams <span className="subtitle">(Ranked by Goals & Assists)</span>
+                        </div>
                         <div className="table-count">{sortedTeams.length} teams</div>
                     </div>
 
@@ -376,9 +497,10 @@ function Teams() {
                                     onClick={() => setSelectedTeam(selectedTeam === team ? '' : team)}
                                 >
                                     <div className="col-rank">
-                                        <div className={`rank-badge ${idx < 4 ? 'rank-top' : idx < 6 ? 'rank-europe' : idx >= 17 ? 'rank-danger' : ''}`}>
+                                        <div className={`rank-badge ${getRankColor(idx, sortedTeams.length)}`}>
                                             {idx + 1}
                                         </div>
+
                                     </div>
                                     <div className="col-team">
                                         <div className="team-badge">
@@ -792,9 +914,9 @@ function App() {
                     .app-container {
                         background: #181818;
                         background-image: 
-                            radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.05) 0%, transparent 50%),
-                            radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
-                            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(74, 222, 128, 0.03) 2px, rgba(74, 222, 128, 0.03) 4px);
+                            radial-gradient(circle at 20% 50%, rgba(233, 0, 82, 0.05) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 80%, rgba(61, 25, 91, 0.05) 0%, transparent 50%),
+                            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(233, 0, 82, 0.03) 2px, rgba(233, 0, 82, 0.03) 4px);
                         min-height: 100vh;
                         color: #fff;
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
@@ -815,7 +937,7 @@ function App() {
                         left: -100%;
                         width: 100%;
                         height: 100%;
-                        background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.1), transparent);
+                        background: linear-gradient(90deg, transparent, rgba(233, 0, 82, 0.1), transparent);
                         animation: shimmer 3s infinite;
                     }
 
@@ -837,7 +959,7 @@ function App() {
                         font-size: 1.3rem;
                         font-weight: 700;
                         letter-spacing: -0.5px;
-                        background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
+                        background: linear-gradient(135deg, #ff1a75, #c026d3, #e879f9);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
@@ -867,9 +989,9 @@ function App() {
                         align-items: center;
                         justify-content: center;
                         padding: 0px;
-                        box-shadow: 0 4px 20px rgba(74, 222, 128, 0.4);
+                        box-shadow: 0 4px 20px rgba(233, 0, 82, 0.4);
                         animation: pulse 3s ease-in-out infinite;
-}
+                    }
 
                     @keyframes pulse {
                         0%, 100% { transform: scale(1); }
@@ -898,8 +1020,8 @@ function App() {
                     }
 
                     .season-selector:hover {
-                        border-color: #4ade80;
-                        box-shadow: 0 0 15px rgba(74, 222, 128, 0.2);
+                        border-color: #e90052;
+                        box-shadow: 0 0 15px rgba(233, 0, 82, 0.2);
                         transform: translateY(-2px);
                     }
 
@@ -935,10 +1057,10 @@ function App() {
 
                     .nav-tab-active {
                         color: #fff;
-                        border-bottom-color: #4ade80;
+                        border-bottom-color: #e90052;
                         position: relative;
                     }
-
+                    
                     .nav-tab-active::after {
                         content: '';
                         position: absolute;
@@ -946,8 +1068,8 @@ function App() {
                         left: 0;
                         right: 0;
                         height: 2px;
-                        background: linear-gradient(90deg, #4ade80, #22c55e);
-                        box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+                        background: linear-gradient(90deg, #e90052, #3d195b);
+                        box-shadow: 0 0 10px rgba(233, 0, 82, 0.5);
                     }
 
                     .main-content {
@@ -982,32 +1104,38 @@ function App() {
                         overflow: hidden;
                     }
 
-                    .stat-card::before {
+                    .stat-card:before {
                         content: '';
                         position: absolute;
                         top: 0;
                         left: 0;
                         right: 0;
                         height: 3px;
-                        background: linear-gradient(90deg, #4ade80, #22c55e);
+                        background: linear-gradient(90deg, #e90052, #3d195b);
                         transform: scaleX(0);
                         transition: transform 0.3s ease;
                     }
-
+                    
                     .stat-card:hover {
                         transform: translateY(-4px);
-                        border-color: #4ade80;
-                        box-shadow: 0 8px 30px rgba(74, 222, 128, 0.2);
+                        border-color: #e90052;
+                        box-shadow: 0 8px 30px rgba(233, 0, 82, 0.2);
                     }
 
                     .stat-card:hover::before {
                         transform: scaleX(1);
                     }
+                    
+                    .subtitle {
+                    font-size: 0.9rem;
+                    color: #666;
+                    font-weight: normal;
+                }
 
                     .stat-card-value {
                         font-size: 2rem;
                         font-weight: 700;
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        background: linear-gradient(135deg, #e90052, #3d195b);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
@@ -1034,8 +1162,8 @@ function App() {
                     }
 
                     .content-card:hover {
-                        border-color: #4ade80;
-                        box-shadow: 0 8px 30px rgba(74, 222, 128, 0.15);
+                        border-color: #e90052;
+                        box-shadow: 0 8px 30px rgba(233, 0, 82, 0.15);
                         transform: translateY(-2px);
                     }
 
@@ -1070,7 +1198,7 @@ function App() {
                         top: 0;
                         bottom: 0;
                         width: 3px;
-                        background: linear-gradient(180deg, #4ade80, #22c55e);
+                        background: linear-gradient(180deg, #e90052, #3d195b);
                         transform: scaleY(0);
                         transition: transform 0.3s ease;
                     }
@@ -1087,15 +1215,15 @@ function App() {
                     .leader-rank {
                         width: 24px;
                         height: 24px;
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        background: linear-gradient(135deg, #e90052, #3d195b);
                         border-radius: 6px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         font-size: 0.85rem;
                         font-weight: 600;
-                        color: #000;
-                        box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+                        color: #fff;
+                        box-shadow: 0 2px 8px rgba(233, 0, 82, 0.3);
                     }
 
                     .leader-info {
@@ -1116,7 +1244,7 @@ function App() {
                     .leader-stat {
                         font-size: 1.1rem;
                         font-weight: 700;
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        background: linear-gradient(135deg, #ff1a75, #c026d3, #e879f9);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
@@ -1181,6 +1309,13 @@ function App() {
                     .league-table-row:last-child {
                         border-bottom: none;
                     }
+                  
+                  .rank-badge.rank-blue { background-color: #007bff !important; color: white !important; }
+                    .rank-badge.rank-green { background-color: #28a745 !important; color: white !important; }
+                    .rank-badge.rank-yellow { background-color: #ffc107 !important; color: black !important; }
+                    .rank-badge.rank-orange { background-color: #fd7e14 !important; color: white !important; }
+                    .rank-badge.rank-red { background-color: #dc3545 !important; color: white !important; }
+
 
                     .row-expanded {
                         background: #333;
@@ -1206,16 +1341,16 @@ function App() {
                     }
 
                     .rank-top {
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
-                        color: #000;
-                        border-color: #16a34a;
-                        box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
-                        animation: glow-green 2s ease-in-out infinite;
+                        background: linear-gradient(135deg, #e90052, #3d195b);
+                        color: #fff;
+                        border-color: #2d0d45;
+                        box-shadow: 0 0 20px rgba(233, 0, 82, 0.6);
+                        animation: glow-magenta 2s ease-in-out infinite;
                     }
-
-                    @keyframes glow-green {
-                        0%, 100% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.6); }
-                        50% { box-shadow: 0 0 30px rgba(74, 222, 128, 0.8), 0 0 40px rgba(74, 222, 128, 0.4); }
+                    
+                    @keyframes glow-magenta {
+                        0%, 100% { box-shadow: 0 0 20px rgba(233, 0, 82, 0.6); }
+                        50% { box-shadow: 0 0 30px rgba(233, 0, 82, 0.8), 0 0 40px rgba(233, 0, 82, 0.4); }
                     }
 
                     .rank-europe {
@@ -1251,39 +1386,40 @@ function App() {
                     }
 
                     .team-badge {
-                        width: 48px;
-                        height: 48px;
+                        width: 48px;             
+                        height: 48px;            
                         background: linear-gradient(135deg, #1f1f1f, #2a2a2a);
-                        border-radius: 8px;
+                        border-radius: 12px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 0.7rem;
+                        font-size: 1rem;
                         font-weight: 700;
-                        border: 2px solid #4ade80;
-                        box-shadow: 0 4px 15px rgba(74, 222, 128, 0.25);
+                        border: 2px solid #e90052;
+                        box-shadow: 0 4px 15px rgba(233, 0, 82, 0.25);
                         transition: all 0.3s ease;
                         position: relative;
+                        flex-shrink: 0;          
                     }
-
+                    
                     .team-badge::after {
                         content: '';
                         position: absolute;
                         inset: 0;
                         border-radius: 8px;
                         padding: 2px;
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        background: linear-gradient(135deg, #e90052, #3d195b);
                         -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
                         -webkit-mask-composite: xor;
                         mask-composite: exclude;
                         opacity: 0;
                         transition: opacity 0.3s ease;
                     }
-
+                    
                     .league-table-row:hover .team-badge {
                         transform: scale(1.15) rotate(5deg);
-                        border-color: #22c55e;
-                        box-shadow: 0 6px 25px rgba(74, 222, 128, 0.5);
+                        border-color: #3d195b;
+                        box-shadow: 0 6px 25px rgba(233, 0, 82, 0.5);
                     }
 
                     .league-table-row:hover .team-badge::after {
@@ -1300,7 +1436,7 @@ function App() {
                     }
 
                     .stat-highlight {
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
+                        background: linear-gradient(135deg, #ff1a75, #c026d3, #e879f9);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
@@ -1314,12 +1450,12 @@ function App() {
 
                     .squad-expansion {
                         background: linear-gradient(180deg, #222, #1e1e1e);
-                        border-top: 2px solid #4ade80;
+                        border-top: 2px solid #e90052;
                         animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
                         position: relative;
                         overflow: hidden;
                     }
-
+                    
                     .squad-expansion::before {
                         content: '';
                         position: absolute;
@@ -1327,7 +1463,7 @@ function App() {
                         left: -100%;
                         width: 100%;
                         height: 100%;
-                        background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.1), transparent);
+                        background: linear-gradient(90deg, transparent, rgba(233, 0, 82, 0.1), transparent);
                         animation: shimmerExpansion 2s ease-in-out;
                     }
 
@@ -1390,15 +1526,15 @@ function App() {
                         transform: translateY(-50%);
                         width: 4px;
                         height: 0;
-                        background: linear-gradient(180deg, #4ade80, #22c55e);
+                        background: linear-gradient(180deg, #e90052, #3d195b);
                         border-radius: 2px;
                         transition: height 0.3s ease;
                     }
-
+                    
                     .squad-player-row:hover {
-                        background: linear-gradient(90deg, rgba(74, 222, 128, 0.1), transparent);
+                        background: linear-gradient(90deg, rgba(233, 0, 82, 0.1), transparent);
                         padding-left: 3.5rem;
-                        border-left: 3px solid #4ade80;
+                        border-left: 3px solid #e90052;
                     }
 
                     .squad-player-row:hover::before {
@@ -1429,8 +1565,8 @@ function App() {
 
                     .search-input-box:focus {
                         outline: none;
-                        border-color: #4ade80;
-                        box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+                        border-color: #e90052;
+                        box-shadow: 0 0 20px rgba(233, 0, 82, 0.3);
                     }
 
                     .data-table {
@@ -1465,23 +1601,24 @@ function App() {
                     }
 
                     .player-avatar {
-                        width: 40px;
-                        height: 40px;
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
-                        color: #000;
+                        width: 48px;
+                        height: 48px;
+                        background: linear-gradient(135deg, #ff1a75, #c026d3);
+                        color: #fff;
                         border-radius: 50%;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         font-weight: 700;
-                        font-size: 0.85rem;
-                        box-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+                        font-size: 0.95rem;
+                        box-shadow: 0 0 20px rgba(255, 26, 117, 0.6);
                         transition: all 0.3s ease;
+                        border: 2px solid #ff1a75;
                     }
-
+                    
                     .table-row:hover .player-avatar {
                         transform: scale(1.1) rotate(5deg);
-                        box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+                        box-shadow: 0 0 20px rgba(233, 0, 82, 0.6);
                     }
 
                     .player-text {
@@ -1513,6 +1650,10 @@ function App() {
                     .stat-num {
                         font-weight: 600;
                         font-size: 0.95rem;
+                        background: linear-gradient(135deg, #ff1a75, #c026d3);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
                     }
 
                     .stat-lbl {
@@ -1526,8 +1667,8 @@ function App() {
                     }
 
                     .generate-btn {
-                        background: linear-gradient(135deg, #4ade80, #22c55e);
-                        color: #000;
+                        background: linear-gradient(135deg, #e90052, #3d195b);
+                        color: #fff;
                         border: none;
                         padding: 0.85rem 2rem;
                         border-radius: 10px;
@@ -1535,7 +1676,7 @@ function App() {
                         font-weight: 600;
                         cursor: pointer;
                         transition: all 0.3s ease;
-                        box-shadow: 0 4px 20px rgba(74, 222, 128, 0.3);
+                        box-shadow: 0 4px 20px rgba(233, 0, 82, 0.3);
                         position: relative;
                         overflow: hidden;
                     }
@@ -1559,7 +1700,7 @@ function App() {
 
                     .generate-btn:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 6px 30px rgba(74, 222, 128, 0.5);
+                        box-shadow: 0 6px 30px rgba(233, 0, 82, 0.5);
                     }
 
                     .generate-btn:hover::before {
@@ -1591,6 +1732,104 @@ function App() {
                     .error-message {
                         color: #ef4444;
                     }
+                    
+                    .clickable-name {
+                        cursor: pointer;
+                        transition: color 0.2s;
+                    }
+                    
+                    .clickable-name:hover {
+                        color: #ff1a75;
+                        text-decoration: underline;
+                    }
+                    
+                    .player-modal {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.8);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1000;
+                        animation: fadeIn 0.2s;
+                    }
+                    
+                    .player-modal-content {
+                        background: linear-gradient(135deg, #2a2a2a, #242424);
+                        border: 2px solid #ff1a75;
+                        border-radius: 16px;
+                        padding: 2rem;
+                        max-width: 500px;
+                        width: 90%;
+                        position: relative;
+                        box-shadow: 0 10px 50px rgba(233, 0, 82, 0.3);
+                    }
+                    
+                    .modal-close {
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: none;
+                        border: none;
+                        color: #fff;
+                        font-size: 2rem;
+                        cursor: pointer;
+                        line-height: 1;
+                    }
+                    
+                    .modal-close:hover {
+                        color: #ff1a75;
+                    }
+                    
+                    .player-modal-content h2 {
+                        margin-bottom: 1rem;
+                        font-size: 1.5rem;
+                    }
+                    
+                    .player-details {
+                        margin-bottom: 1.5rem;
+                        color: #aaa;
+                    }
+                    
+                    .player-details p {
+                        margin: 0.5rem 0;
+                    }
+                    
+                    .recommendation-box {
+                        background: #1f1f1f;
+                        border: 3px solid;
+                        border-radius: 12px;
+                        padding: 1.5rem;
+                        margin-top: 1rem;
+                    }
+                    
+                    .recommendation-box h3 {
+                        margin: 0 0 1rem 0;
+                        font-size: 1.3rem;
+                    }
+                    
+                    .recommendation-reasons {
+                        list-style: none;
+                        padding: 0;
+                    }
+                    
+                    .recommendation-reasons li {
+                        padding: 0.5rem 0;
+                        padding-left: 1.5rem;
+                        position: relative;
+                    }
+                    
+                    .recommendation-reasons li::before {
+                        content: '→';
+                        position: absolute;
+                        left: 0;
+                        color: #ff1a75;
+                    }
+                    
+                    
 
                     @media (max-width: 768px) {
                         .league-header {
