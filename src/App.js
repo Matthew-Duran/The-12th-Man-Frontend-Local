@@ -1,7 +1,8 @@
 //Key Imports
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import supabase from "./supabaseClient";
 
 // Logo mappings
 const TEAM_LOGOS = {
@@ -145,16 +146,20 @@ function SearchPlayers() {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:1212/api/v1/player');
-            setPlayers(response.data);
+
+            let { data, error } = await supabase.from("player_statistic").select("*");
+            if (error) throw error;
+            setPlayers(data);
+
             setError(null);
         } catch (err) {
-            setError('Failed to fetch players. Make sure your Spring Boot API is running on port 1212.');
+            setError('Failed to fetch players. Make sure your backend is running.');
             console.error('Error fetching players:', err);
         } finally {
             setLoading(false);
         }
     };
+
 
     const filteredPlayers = players.filter(player =>
         player.name && player.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -770,24 +775,33 @@ function Prediction() {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get('http://localhost:1212/api/v1/predictions');
-            setPredictions(response.data);
 
+            const response = await axios.get("http://localhost:1212/api/v1/predictions");
+
+            setPredictions(response.data);
             console.log("Prediction team names:", response.data.map(p => p.teamName));
 
-
         } catch (err) {
-            setError('Failed to load predictions.');
+            console.error(err);
+            setError("Failed to load predictions.");
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        fetchPredictions();
+    }, []);
+
     return (
         <div className="page-content">
             <div className="prediction-header">
-                <button className="generate-btn" onClick={fetchPredictions} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate Predictions'}
+                <button
+                    className="generate-btn"
+                    onClick={fetchPredictions}
+                    disabled={loading}
+                >
+                    {loading ? "Generating..." : "Generate Predictions"}
                 </button>
             </div>
 
@@ -805,35 +819,56 @@ function Prediction() {
                             <div className="col-team">Team</div>
                             <div className="col-stat">PTS</div>
                         </div>
-                        {predictions.map((pred) => (
-                            <div key={pred.id} className="league-table-row">
-                                <div className="col-rank">
-                                    <div className={`rank-badge 
-                                        ${pred.predictedRank <= 4 ? 'rank-top' : ''}
-                                        ${pred.predictedRank > 4 && pred.predictedRank <= 6 ? 'rank-europe' : ''}
-                                        ${pred.predictedRank >= 18 ? 'rank-danger' : ''}
-                                    `}>
-                                        {pred.predictedRank}
+
+                        {predictions.map((pred) => {
+                            const logo = getTeamLogo(pred.teamName);
+
+                            return (
+                                <div key={pred.id} className="league-table-row">
+                                    <div className="col-rank">
+                                        <div
+                                            className={`rank-badge 
+                                                ${pred.predictedRank <= 4 ? "rank-blue" : ""}
+                                                ${pred.predictedRank > 4 && pred.predictedRank <= 6 ? "rank-green" : ""}
+                                                ${pred.predictedRank > 6 && pred.predictedRank <= 10 ? "rank-yellow" : ""}
+                                                ${pred.predictedRank > 10 && pred.predictedRank <= 17 ? "rank-orange" : ""}
+                                                ${pred.predictedRank >= 18 ? "rank-red" : ""}
+                                            `}
+                                        >
+                                            {pred.predictedRank}
+                                        </div>
+                                    </div>
+
+                                    <div className="col-team">
+                                        <div className="team-badge">
+                                            {logo ? (
+                                                <img
+                                                    src={logo}
+                                                    alt={pred.teamName}
+                                                    style={{
+                                                        width: "100%",
+                                                        height: "100%",
+                                                        objectFit: "contain",
+                                                        padding: "4px",
+                                                    }}
+                                                />
+                                            ) : (
+                                                pred.teamName.substring(0, 3).toUpperCase()
+                                            )}
+                                        </div>
+                                        <span className="team-name-full">{pred.teamName}</span>
+                                    </div>
+
+                                    <div className="col-stat stat-bold">
+                                        {Math.round(pred.predictedPoints)}
                                     </div>
                                 </div>
-                                <div className="col-team">
-                                    <div className="team-badge">
-                                        {getTeamLogo(pred.teamName) ? (
-                                            <img src={getTeamLogo(pred.teamName)} alt={pred.teamName} style={{width: '100%', height: '100%', objectFit: 'contain', padding: '4px'}} />
-                                        ) : (
-                                            pred.teamName.substring(0, 3).toUpperCase()
-                                        )}
-                                    </div>
-                                    <span className="team-name-full">{pred.teamName}</span>
-                                </div>
-                                <div className="col-stat stat-bold">{Math.round(pred.predictedPoints)}</div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     <div className="prediction-footer">
-                        Based on RandomForest model
-                        trained on 2020-2024 PL data
+                        Based on RandomForest model trained on 2020-2024 PL data
                     </div>
                 </div>
             )}
