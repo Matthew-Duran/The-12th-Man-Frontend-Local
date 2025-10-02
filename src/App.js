@@ -133,7 +133,7 @@ const getPlayerRecommendation = (player) => {
 
 // Search Players -----------------------------------------------------------------------------------
 function SearchPlayers() {
-    const [players] = useState([]);
+    const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
